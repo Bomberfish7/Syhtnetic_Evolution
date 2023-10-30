@@ -56,70 +56,47 @@ def CreateBaseFood(pos,angle,size,food_type):
     if(food_type<=3):
         #Grass, Bushes, Trees, and Kelp
         new_food=Plant()
-##        new_seed=Plant()
     elif(food_type==4):
         #Fruits
         new_food=Fruit()
-##        new_seed=Fruit()
     elif(food_type==5):
         #Mushrooms
         new_food=Mushroom()
-##        new_seed=Mushroom()
     elif(food_type==6 or food_type==7):
         #Meat and Bones
         new_food=Food()
-##        new_seed=Food()
     elif(food_type==8 or food_type==9):
         #Bugs and Fish
         new_food=PreyFood()
-##        new_seed=PreyFood()
     else:
         #Eggs
         new_food=Food()
-##        new_seed=Food()
     new_food.setFoodCopy(Base_Foods[food_type].getFoodCopy())
-##    new_seed.setFoodCopy(Base_Foods[food_type].getFoodCopy())
     new_food.setPos(Point(pos.getA(),pos.getB()))
     new_food.setShape(shapes[Base_Foods[food_type].getId()][0])
     new_food.setAngle(angle)
     new_food.setSize(size)
     new_food.UpdateHitbox()
     new_food.setOutline((np.clip(new_food.getColor()[0]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[1]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[2]+random.randint(-25,25),0,255)))
-##    new_food.setSeed(new_seed)
-##    print(new_seed)
-
     return new_food
 
 def CreateFood(pos,angle,size,energy,food):
     #Creates a food object from another food
-##    print(food)
-##    print(food.getSeed())
-##    print(type(food.getSeed()))
-##    print(food.getSeed().getFoodCopy())
     shapeIndex = 1 if type(food) in cluster_classes else 0
     if isinstance(food,Plant):
         new_food=Plant()
-##        new_seed=Plant()
     elif isinstance(food,Fruit):
         new_food=Fruit()
-##        new_seed=Fruit()
     elif isinstance(food,Mushroom):
         new_food=Mushroom()
-##        new_seed=Mushroom()
     elif isinstance(food,PreyFood):
         new_food=PreyFood()
-##        new_seed=PreyFood()
     elif isinstance(food,Egg):
         new_food=Egg()
-##        new_seed=Egg()
     else:
         new_food=Food()
-##        new_seed=Food()
 
     new_food.setFoodCopy(food.getFoodCopy())
-##    new_seed.setFoodCopy(food.getSeed().getFoodCopy())
-##    new_seed.setAquatic(food.getAquatic())
-##    new_seed.setPoison(food.getPoison())
     new_food.setPos(Point(pos.getA(),pos.getB()))
     new_food.setShape(shapes[food.getId()][0])
     new_food.setAngle(angle)
@@ -127,8 +104,6 @@ def CreateFood(pos,angle,size,energy,food):
     new_food.UpdateHitbox()
     new_food.setEnergy(energy)
     new_food.setOutline((np.clip(new_food.getColor()[0]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[1]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[2]+random.randint(-25,25),0,255)))
-##    new_food.setSeed(new_seed)
-    print(new_food)
 
     return new_food
 
@@ -362,10 +337,6 @@ def FoodReproduce():
         if(i.getSize()>=1):
             r=random.uniform(0,100)
             if(i.getId()=="Grass" and i.getEnergy()>=i.getMaxEN()*0.9 and r<=(i.getMaxSZ()*0.1/Globals.fps)*Globals.timescale):
-##                print(i)
-##                print(i.getSeed())
-##                print(type(i.getSeed()))
-##                print(i.getSeed().getFoodCopy())
                 size=random.uniform(0.45,0.55)
                 radius=random.uniform(16,48)*i.getSize()
                 direction=random.uniform(0,360)
@@ -577,11 +548,11 @@ try:
                 if(event.key==pygame.K_UP):
                     if(Globals.devtest_foodspawn_type<10):
                         Globals.devtest_foodspawn_type+=1
-                        print("Food placement type is:",Globals.devtest_foodspawn_type)
+                        print("Food placement type is:",Globals.devtest_foodspawn_type, flush = True)
                 elif(event.key==pygame.K_DOWN):
                     if(Globals.devtest_foodspawn_type>0):
                         Globals.devtest_foodspawn_type-=1
-                        print("Food placement type is:",Globals.devtest_foodspawn_type)
+                        print("Food placement type is:",Globals.devtest_foodspawn_type, flush = True)
                 elif(event.key==pygame.K_LEFT):
                     if(Globals.devtest_timeincrease):
                         if(Globals.timescale>9):
@@ -589,16 +560,16 @@ try:
                     else:
                         if(Globals.timescale>0):
                             Globals.timescale-=1
-                    print("timescale is:",Globals.timescale)
+                    print("timescale is:",Globals.timescale, flush = True)
                 elif(event.key==pygame.K_RIGHT):
                     if(Globals.devtest_timeincrease):
                         Globals.timescale+=10
                     else:
                         Globals.timescale+=1
-                    print("timescale is:",Globals.timescale)
+                    print("timescale is:",Globals.timescale, flush = True)
                 elif(event.key==pygame.K_r and Globals.devtest_timeincrease):
                     Globals.timescale=1
-                    print("timescale was reset to: 1")
+                    print("timescale was reset to: 1", flush = True)
                 elif(event.key==pygame.K_t):
                     Globals.devtest_mode=not Globals.devtest_mode
                 elif(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
