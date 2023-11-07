@@ -21,7 +21,7 @@ from Statics import *
 
 class Food(Object):
     #Anything edible by creatures
-    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1.0,age=0,poison=0,aquatic=0,max_size=1,seed=None):
+    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1.0,age=0,poison=0,aquatic=0,max_size=1):
         if color is None:
             color=outline
         super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,immortal)
@@ -30,7 +30,6 @@ class Food(Object):
         self.poison=poison
         self.aquatic=aquatic
         self.max_size = max_size
-        self.seed = seed
     def __str__(self):
         return f'Food:\"{self.obj_id}\"\t [Health:{self.health}, Energy:{self.energy}, Regen:{self.energy_regen}, Age:{self.age}, Poison:{self.poison}, Aquatic:{self.aquatic}]'
     def getObjStr(self):
@@ -91,8 +90,8 @@ class Food(Object):
 
 class Plant(Food):
     #Food source that uses Globals.light to gain energy
-    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1,seed=None,neighbor=0):
-        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,max_size,seed)
+    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1,neighbor=0):
+        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,max_size)
         self.neighbor=neighbor
     def __str__(self):
         return f'Plant:\"{self.obj_id}\"\t [Health:{self.health}, Energy:{self.energy}, Regen:{self.energy_regen}, Age:{self.age}, Poison:{self.poison}, Aquatic:{self.aquatic}]'
@@ -100,7 +99,7 @@ class Plant(Food):
     def getNbr(self):
         return self.neighbor
     def getRegen(self):
-        return self.energy_regen-self.neighbor
+        return self.energy_regen*self.size-self.neighbor
 
     def setNbr(self,neighbor):
         self.neighbor=neighbor
@@ -114,14 +113,14 @@ class Plant(Food):
                     self.size+=(0.05*((self.energy_regen*self.size-self.neighbor)*0.5*(Globals.light*0.0125)))/Globals.fps*Globals.timescale
                 self.energy-=((self.energy_regen*self.size-self.neighbor)*0.5*(Globals.light*0.0125))/Globals.fps*Globals.timescale
     def RegenEnergy(self):
-        if(self.energy<self.max_energy*self.size):
+        if(self.energy<=self.max_energy*self.size):
             self.energy+=((self.energy_regen*self.size-self.neighbor)/Globals.fps)*Globals.timescale*(Globals.light*0.0125)
         if(self.energy>self.max_energy*self.size):
             self.energy=self.max_energy*self.size
     def RegenHealth(self):
         if(self.energy>=self.max_energy*self.size/2 and self.health<self.max_health*self.size):
             self.health+=((self.energy_regen*self.size-self.neighbor)*0.75*(Globals.light*0.0125))/Globals.fps*Globals.timescale
-            self.energy-=((self.energy_regen*self.size-self.neighbor)*0.75*(Globals.light*0.0125))/Globals.fps*Globals.timescale
+            self.energy-=abs((self.energy_regen*self.size-self.neighbor)*0.75*(Globals.light*0.0125))/Globals.fps*Globals.timescale
         if(self.health>self.max_health*self.size):
             self.energy+=self.health-self.max_health*self.size
             if(self.energy>self.max_energy*self.size):
@@ -148,8 +147,8 @@ class Fruit(Food):
 
 class Mushroom(Food):
     #Food source that consumes meat and boosts plants
-    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1,seed=None):
-        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,max_size,seed)
+    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1):
+        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,max_size)
 
     def __str__(self):
         return f'Mushroom:\"{self.obj_id}\"\t [Health:{self.health}, Energy:{self.energy}, Regen:{self.energy_regen}, Age:{self.age}, Poison:{self.poison}, Aquatic:{self.aquatic}]'
@@ -168,8 +167,8 @@ class Mushroom(Food):
 
 class PreyFood(Food):
     #Food source that can move and has limited AI
-    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1,seed=None):
-        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,max_size,seed)
+    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1):
+        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,max_size)
     def __str__(self):
         return f'PreyFood:\"{self.obj_id}\"\t [Health:{self.health}, Energy:{self.energy}, Regen:{self.energy_regen}, Age:{self.age}, Poison:{self.poison}, Aquatic:{self.aquatic}]'
 
@@ -178,8 +177,8 @@ class PreyFood(Food):
 
 class Egg(Food):
     #Food that holds Creature data
-    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1,seed=None):
-        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,max_size,seed)
+    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1):
+        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,max_size)
     def __str__(self):
         return f'Egg:\"{self.obj_id}\"\t [Health:{self.health}, Energy:{self.energy}, Regen:{self.energy_regen}, Age:{self.age}, Poison:{self.poison}, Aquatic:{self.aquatic}]'
 
@@ -189,8 +188,8 @@ class Egg(Food):
 
 
 class FoodCluster(Food):
-    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1,seed=None):
-        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,seed=seed)
+    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1):
+        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic)
         self.max_size=max_size
 
     def getMaxSZ(self):
@@ -207,19 +206,20 @@ class FoodCluster(Food):
     def setClusterFood(self,food):
         self.setFoodCopy(food.getFoodCopy())
         self.max_size=1
-##        self.setSeed(food.getFoodCopy())
 
     def Merge(self,food):
         self.max_size+=1
         self.size+=food.getSize()
+        self.max_energy+=food.getMaxEN()
+        self.max_health+=food.getMaxHP()
         self.energy+=food.getEnergy()
         self.health+=food.getHealth()
         self.pos=Point((self.pos.getA()+food.getPos().getA())/2,(self.pos.getB()+food.getPos().getB())/2)
         self.outline=((self.outline[0]+food.getOutline()[0])/2,(self.outline[1]+food.getOutline()[1])/2,(self.outline[2]+food.getOutline()[2])/2)
 
 class PlantCluster(Plant):
-    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,neighbor=0,max_size=1,seed=None):
-        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,seed=seed,neighbor=neighbor)
+    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,neighbor=0,max_size=1):
+        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,neighbor)
         self.max_size=max_size
 
     def getMaxSZ(self):
@@ -236,11 +236,12 @@ class PlantCluster(Plant):
     def setClusterFood(self,food):
         self.setFoodCopy(food.getFoodCopy())
         self.max_size=1
-##        self.setSeed(food.getFoodCopy())
 
     def Merge(self,food):
         self.max_size+=1
         self.size+=food.getSize()
+        self.max_energy+=food.getMaxEN()
+        self.max_health+=food.getMaxHP()
         self.energy+=food.getEnergy()
         self.health+=food.getHealth()
         self.pos=Point((self.pos.getA()+food.getPos().getA())/2,(self.pos.getB()+food.getPos().getB())/2)
@@ -255,8 +256,8 @@ class PlantCluster(Plant):
                 self.energy-=((self.energy_regen*self.size-self.neighbor)*0.5*(Globals.light*0.0125))/Globals.fps*Globals.timescale
 
 class MushroomCluster(Mushroom):
-    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1,seed=None):
-        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic,seed=seed)
+    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,digestion_speed=1,immortal=False,energy_regen=1,age=0,poison=0,aquatic=0,max_size=1):
+        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,digestion_speed,immortal,energy_regen,age,poison,aquatic)
         self.max_size=max_size
 
     def getMaxSZ(self):
@@ -273,11 +274,12 @@ class MushroomCluster(Mushroom):
     def setClusterFood(self,food):
         self.setFoodCopy(food.getFoodCopy())
         self.max_size=1
-##        self.setSeed(food.getFoodCopy())
 
     def Merge(self,food):
         self.max_size+=1
         self.size+=food.getSize()
+        self.max_energy+=food.getMaxEN()
+        self.max_health+=food.getMaxHP()
         self.energy+=food.getEnergy()
         self.health+=food.getHealth()
         self.pos=Point((self.pos.getA()+food.getPos().getA())/2,(self.pos.getB()+food.getPos().getB())/2)

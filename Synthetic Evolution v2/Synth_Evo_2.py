@@ -253,43 +253,32 @@ def MergeClusters(i,j):
             if type(Foods[i]) is Food:
                 a=FoodCluster()
                 a.setClusterFood(Foods[i])
-##                a.setSeed(Foods[i].getSeed())
                 if(Foods[i].getId()=="Meat"):
                     a.setShape(shapes[Foods[i].getId()][1])
                 elif(Foods[i].getId()=="Bone"):
                     a.setShape(shapes[Foods[i].getId()][1])
-##                    a.setShape(cluster_Bone)
                 Foods[i]=a
             if type(Foods[i]) is Plant:
                 a=PlantCluster()
                 a.setClusterFood(Foods[i])
-##                if(Foods[i].getId()!="Tree"):
-##                    a.setSeed(Foods[i].getSeed())
                 if(Foods[i].getId()=="Grass"):
                     a.setShape(shapes[Foods[i].getId()][1])
-##                    a.setShape(cluster_Grass)
                 elif(Foods[i].getId()=="Bush"):
                     a.setShape(shapes[Foods[i].getId()][1])
-##                    a.setShape(cluster_Bush)
                 elif(Foods[i].getId()=="Tree"):
                     a.setShape(shapes[Foods[i].getId()][1])
-##                    a.setShape(cluster_Tree)
                 elif(Foods[i].getId()=="Kelp"):
                     a.setShape(shapes[Foods[i].getId()][1])
-##                    a.setShape(cluster_Kelp)
                 Foods[i]=a
             if type(Foods[i]) is Mushroom:
                 a=MushroomCluster()
                 a.setClusterFood(Foods[i])
-##                a.setSeed(Foods[i].getSeed())
                 if(Foods[i].getId()=="Mushroom"):
                     a.setShape(shapes[Foods[i].getId()][1])
-##                    a.setShape(cluster_Mushroom)
                 Foods[i]=a
-        if(Foods[i].getMaxSZ()<3):
+        if(Foods[i].getMaxSZ()<4):
             Foods[i].Merge(Foods[j])
             Foods.pop(j)
-##            print("Check")
             return True
     return False
 
@@ -324,8 +313,18 @@ def CollisionHandler():
 
             if(type(Foods[i]) in [Plant,PlantCluster] and type(Foods[j]) in [Plant,PlantCluster]):
                 if(pygame.Rect.colliderect(Foods[i].getDim(),Foods[j].getDim())):
-                    Foods[j].setNbr(Foods[j].getNbr()+Foods[i].getMaxEN()/300)
-                    Foods[i].setNbr(Foods[i].getNbr()+Foods[j].getMaxEN()/300)
+                    if (Foods[i].getId()=="Tree" and Foods[j].getId()=="Tree"):
+                        Foods[j].setNbr(Foods[j].getNbr()+Foods[i].getMaxEN()/2400)
+                        Foods[i].setNbr(Foods[i].getNbr()+Foods[j].getMaxEN()/2400)
+                    else:
+                        if (Foods[j].getId()=="Tree"):
+                            Foods[j].setNbr(Foods[j].getNbr()+Foods[i].getMaxEN()/900)
+                        else:
+                            Foods[j].setNbr(Foods[j].getNbr()+Foods[i].getMaxEN()/450)
+                        if (Foods[i].getId()=="Tree"):
+                            Foods[i].setNbr(Foods[i].getNbr()+Foods[j].getMaxEN()/900)
+                        else:
+                            Foods[i].setNbr(Foods[i].getNbr()+Foods[j].getMaxEN()/450)
             j-=1
         i-=1
 
@@ -358,11 +357,11 @@ def FoodReproduce():
 
                 Foods.append(CreateFood(pos,0,size,size*i.getMaxEN()*0.1,i))
                 i.setEnergy(i.getEnergy()*(1-0.6*(1+(size-0.2))))
-            if(i.getId()=="Tree" and i.getEnergy()>=i.getMaxEN()*0.975 and r<=(i.getMaxSZ()*0.1/Globals.fps)*Globals.timescale):
-                f=random.randrange(1,round(5*i.getSize()))
+            if(i.getId()=="Tree" and i.getEnergy()>=i.getMaxEN()*0.975 and r<=(i.getMaxSZ()*0.15/Globals.fps)*Globals.timescale):
+                f=random.randrange(1,round(5*(math.pow(i.getSize(),0.75))))
                 for j in range(f):
                     size=random.uniform(0.90,1.10)
-                    radius=random.uniform(32,80)*i.getSize()
+                    radius=random.uniform(32,80)*(math.pow(3*i.getSize(),(1/3)))
                     direction=random.uniform(0,360)
                     pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
 
@@ -386,7 +385,7 @@ def FoodReproduce():
                 if(spawn):
                     Foods.append(CreateFood(pos,0,size,size*i.getMaxEN()*0.1,i))
                     i.setEnergy(i.getEnergy()*(1-0.25*(1+(size-0.1))))
-            if(i.getId()=="Fruit" and i.getEnergy()<=i.getMaxEN()*0.1 and r<=(i.getMaxSZ()*2.5/Globals.fps)*Globals.timescale):
+            if(i.getId()=="Fruit" and i.getEnergy()<=i.getMaxEN()*0.1 and r<=(i.getMaxSZ()*4.0/Globals.fps)*Globals.timescale):
                 size=random.uniform(0.05,0.15)
                 radius=random.uniform(0,32)*i.getSize()
                 direction=random.uniform(0,360)
@@ -549,11 +548,11 @@ try:
                 if(event.key==pygame.K_UP):
                     if(Globals.devtest_foodspawn_type<10):
                         Globals.devtest_foodspawn_type+=1
-                        print("Food placement type is:",Globals.devtest_foodspawn_type)#, flush = True)
+                        print("Food placement type is:",Globals.devtest_foodspawn_type)
                 elif(event.key==pygame.K_DOWN):
                     if(Globals.devtest_foodspawn_type>0):
                         Globals.devtest_foodspawn_type-=1
-                        print("Food placement type is:",Globals.devtest_foodspawn_type)#, flush = True)
+                        print("Food placement type is:",Globals.devtest_foodspawn_type)
                 elif(event.key==pygame.K_LEFT):
                     if(Globals.devtest_timeincrease):
                         if(Globals.timescale>9):
@@ -561,16 +560,16 @@ try:
                     else:
                         if(Globals.timescale>0):
                             Globals.timescale-=1
-                    print("timescale is:",Globals.timescale)#, flush = True)
+                    print("timescale is:",Globals.timescale)
                 elif(event.key==pygame.K_RIGHT):
                     if(Globals.devtest_timeincrease):
                         Globals.timescale+=10
                     else:
                         Globals.timescale+=1
-                    print("timescale is:",Globals.timescale)#, flush = True)
+                    print("timescale is:",Globals.timescale)
                 elif(event.key==pygame.K_r and Globals.devtest_timeincrease):
                     Globals.timescale=1
-                    print("timescale was reset to: 1")#, flush = True)
+                    print("timescale was reset to: 1")
                 elif(event.key==pygame.K_t):
                     Globals.devtest_mode=not Globals.devtest_mode
                 elif(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
@@ -628,9 +627,6 @@ try:
         pygame.display.update()
 except Exception:
     traceback.print_exc()
-##    pygame.quit()
-##    sys.exit()
-##    print("Fuck you")
 finally:
     pygame.quit()
     sys.exit()

@@ -12,7 +12,6 @@ import math
 import numpy as np
 from Statics import *
 from Food_Types import Food,Plant,Fruit,Mushroom,PreyFood,Egg,FoodCluster,PlantCluster,MushroomCluster
-##import FoodCluster,PlantCluster,MushroomCluster
 
 
 camera=Point(0,0)
@@ -60,14 +59,14 @@ shape_Fish = [Point(-8,-4),Point(-8,4),Point(8,4),Point(8,-4)]
 shape_Egg = [Point(-5,1),Point(0,3),Point(5,1),Point(0,-8)]
 
 ##Clusters
-cluster_Grass=[Point(-5,0),Point(-6,-12),Point(-4,-6),Point(-2,-18),Point(0,-8),Point(2,-18),Point(4,-6),Point(6,-12),Point(5,0)]
-cluster_Bush=[Point(-10,0),Point(-4,-4),Point(0,-10),Point(4,-4),Point(10,0),Point(4,4),Point(0,10),Point(-4,4)]
-cluster_Tree=[Point(-25,0),Point(-19,-11),Point(-18,-18),Point(-11,-19),Point(0,-25),Point(11,-19),Point(18,-18),Point(19,-11),Point(25,0),Point(19,11),Point(18,18),Point(11,19),Point(0,25),Point(-11,19),Point(-18,18),Point(-19,11)]
-cluster_Kelp=[Point(-5,0),Point(-6,-12),Point(-4,-6),Point(-2,-18),Point(0,-8),Point(2,-18),Point(4,-6),Point(6,-12),Point(5,0),Point(3,-3),Point(0,0),Point(-3,-3)]
+cluster_Grass=[Point(-2.5,0),Point(-3,-6),Point(-2,-3),Point(-1,-9),Point(0,-4),Point(1,-9),Point(2,-3),Point(3,-6),Point(2.5,0)]
+cluster_Bush=[Point(-5,0),Point(-2,-2),Point(0,-5),Point(2,-2),Point(5,0),Point(2,2),Point(0,5),Point(-2,2)]
+cluster_Tree=[Point(-12.5,0),Point(-9.5,-5.5),Point(-9,-9),Point(-5.5,-9.5),Point(0,-12.5),Point(5.5,-9.5),Point(9,-9),Point(9.5,-5.5),Point(12.5,0),Point(9.5,5.5),Point(9,9),Point(5.5,9.5),Point(0,12.5),Point(-5.5,9.5),Point(-9,9),Point(-9.5,5.5)]
+cluster_Kelp=[Point(-2.5,0),Point(-3,-6),Point(-2,-3),Point(-1,-9),Point(0,-4),Point(1,-9),Point(2,-3),Point(3,-6),Point(2.5,0),Point(1.5,-1.5),Point(0,0),Point(-1.5,-1.5)]
 
-cluster_Mushroom=[Point(0,0),Point(-4,-3),Point(-8,0),Point(-11,-6),Point(11,-6),Point(8,0),Point(4,-3)]
-cluster_Meat=[Point(-4,0),Point(-7,-6),Point(-6,-7),Point(0,-4),Point(6,-7),Point(7,-6),Point(4,0),Point(7,6),Point(6,7),Point(0,4),Point(-6,7),Point(-7,6)]
-cluster_Bone=[Point(-2,-7),Point(-2,-3),Point(-5,-3),Point(-5,-1),Point(-2,-1),Point(-2,1),Point(-6,1),Point(-6,3),Point(-2,3),Point(-2,5),Point(-7,5),Point(-7,7),Point(7,7),Point(7,5),Point(2,5),Point(2,3),Point(6,3),Point(6,1),Point(2,1),Point(2,-1),Point(5,-1),Point(5,-3),Point(2,-3),Point(2,-7)]
+cluster_Mushroom=[Point(0,0),Point(-2,-1.5),Point(-4,0),Point(-5.5,-3),Point(5.5,-3),Point(4,0),Point(2,-1.5)]
+cluster_Meat=[Point(-2,0),Point(-3.5,-3),Point(-3,-3.5),Point(0,-2),Point(3,-3.5),Point(3.5,-3),Point(2,0),Point(3.5,3),Point(3,3.5),Point(0,2),Point(-2,3.5),Point(-3.5,3)]
+cluster_Bone=[Point(-1,-3.5),Point(-1,-1.5),Point(-2.5,-1.5),Point(-2.5,-0.5),Point(-1,-0.5),Point(-1,0.5),Point(-3,0.5),Point(-3,1.5),Point(-1,1.5),Point(-1,2.5),Point(-3.5,2.5),Point(-3.5,3.5),Point(3.5,3.5),Point(3.5,2.5),Point(1,2.5),Point(1,1.5),Point(3,1.5),Point(3,0.5),Point(1,0.5),Point(1,-0.5),Point(2.5,-0.5),Point(2.5,-1.5),Point(1,-1.5),Point(1,-3.5)]
 
 shapes={'Grass':[shape_Grass,cluster_Grass],'Bush':[shape_Bush,cluster_Bush],'Tree':[shape_Tree,cluster_Tree],'Kelp':[shape_Kelp,cluster_Kelp],'Fruit':[shape_Fruit,shape_Fruit],'Mushroom':[shape_Mushroom,cluster_Mushroom],'Meat':[shape_Meat,cluster_Meat],'Bone':[shape_Bone,cluster_Bone],'Bug':[shape_Bug,shape_Bug],'Fish':[shape_Fish,shape_Fish],'Egg':[shape_Egg,shape_Egg]}
 Base_Foods.append(base_Grass)
