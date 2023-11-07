@@ -289,7 +289,7 @@ def MergeClusters(i,j):
         if(Foods[i].getMaxSZ()<3):
             Foods[i].Merge(Foods[j])
             Foods.pop(j)
-            print("Check")
+##            print("Check")
             return True
     return False
 
@@ -366,12 +366,12 @@ def FoodReproduce():
                     direction=random.uniform(0,360)
                     pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
 
-                    new_fruit=CreateFood(pos,0,size,size*i.getMaxEN()*1,Base_Foods[4])
+                    new_fruit=CreateFood(pos,0,size,size*(i.getMaxEN()/i.getMaxSZ())*1,Base_Foods[4])
                     new_seed=Plant()
                     new_seed.setFoodCopy(i.getFoodCopy())
                     new_fruit.setSeed(new_seed)
                     Foods.append(new_fruit)
-                    i.setEnergy(i.getEnergy()*(1-0.1*(1+(size-1.0))))#FIXME fruit energy cost/starting value fuckery here up
+                    i.setEnergy(i.getEnergy() - (i.getEnergy()/i.getMaxSZ())*(0+0.1*(1+(size-1.0))))#FIXME fruit energy cost/starting value fuckery here up
             if(i.getId()=="Kelp" and i.getEnergy()>=i.getMaxEN()*0.75 and r<=(i.getMaxSZ()*0.15/Globals.fps)*Globals.timescale):
                 size=random.uniform(0.05,0.15)
                 radius=random.uniform(16,32)*i.getSize()
@@ -517,6 +517,7 @@ test_shapes=[test_grass,test_bush,test_tree,test_fruit,test_kelp,test_poison,tes
 
 try:
     while running:
+##        sys.stdout.flush()
         clock.tick(Globals.fps)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -548,11 +549,11 @@ try:
                 if(event.key==pygame.K_UP):
                     if(Globals.devtest_foodspawn_type<10):
                         Globals.devtest_foodspawn_type+=1
-                        print("Food placement type is:",Globals.devtest_foodspawn_type, flush = True)
+                        print("Food placement type is:",Globals.devtest_foodspawn_type)#, flush = True)
                 elif(event.key==pygame.K_DOWN):
                     if(Globals.devtest_foodspawn_type>0):
                         Globals.devtest_foodspawn_type-=1
-                        print("Food placement type is:",Globals.devtest_foodspawn_type, flush = True)
+                        print("Food placement type is:",Globals.devtest_foodspawn_type)#, flush = True)
                 elif(event.key==pygame.K_LEFT):
                     if(Globals.devtest_timeincrease):
                         if(Globals.timescale>9):
@@ -560,16 +561,16 @@ try:
                     else:
                         if(Globals.timescale>0):
                             Globals.timescale-=1
-                    print("timescale is:",Globals.timescale, flush = True)
+                    print("timescale is:",Globals.timescale)#, flush = True)
                 elif(event.key==pygame.K_RIGHT):
                     if(Globals.devtest_timeincrease):
                         Globals.timescale+=10
                     else:
                         Globals.timescale+=1
-                    print("timescale is:",Globals.timescale, flush = True)
+                    print("timescale is:",Globals.timescale)#, flush = True)
                 elif(event.key==pygame.K_r and Globals.devtest_timeincrease):
                     Globals.timescale=1
-                    print("timescale was reset to: 1", flush = True)
+                    print("timescale was reset to: 1")#, flush = True)
                 elif(event.key==pygame.K_t):
                     Globals.devtest_mode=not Globals.devtest_mode
                 elif(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
@@ -627,6 +628,9 @@ try:
         pygame.display.update()
 except Exception:
     traceback.print_exc()
+##    pygame.quit()
+##    sys.exit()
+##    print("Fuck you")
 finally:
     pygame.quit()
     sys.exit()
