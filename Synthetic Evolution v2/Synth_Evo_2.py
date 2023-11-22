@@ -328,6 +328,10 @@ def CollisionHandler():
             j-=1
         i-=1
 
+def SweepAndPrune(edges):
+    #TODO SAP good
+    pass
+
 def FoodReproduce():
     #Creates more food from the other foods in the simulation
     global Foods
