@@ -65,6 +65,7 @@ class Object:
         self.max_health=max_health
         self.max_energy=max_energy
         self.immortal=immortal
+        self._remove = False
     def __str__(self):
         if(self.immortal):
             return f'Object:\"{self.obj_id}\"🗹\t [Pos:{self.pos}, Speed:{self.delta}, Size:{self.size}, Health:{self.health}/{self.max_health}, Energy:{self.energy}/{self.max_energy}, Mass:{self.mass}, Friction:{self.friction}]'
@@ -221,6 +222,18 @@ class Tile(Object):
         self.setObjectCopy(copy[0])
         self.tile=copy[1]
 
+class Edge:
+    #An edge of an Object
+    def __init__(self,parent=None,isLeft=True,xAxis=True):
+        self.parent=parent
+        self.isLeft=isLeft
+        self.xAxis=xAxis
+        self.pos= self.parent.getDim().left if self.isLeft else self.parent.getDim().right if self.xAxis else self.parent.getDim().top if self.isLeft else self.parent.getDim().bottom
+    def __str__(self):
+        return f' ({self.pos} ' if self.isLeft else f' {self.pos}) '
+    @staticmethod
+    def sortEdge(edge):
+        return edge.pos
 
 
 #Initialize Pygame

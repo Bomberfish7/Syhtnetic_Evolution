@@ -47,6 +47,8 @@ def UpdateTime():
     FoodUpdate()
     CheckIfDead()
     CollisionHandler()
+    UpdateEdges()
+##    SweepAndPrune()
 
 def CreateBaseFood(pos,angle,size,food_type):
     #Creates a food object given parameters
@@ -78,6 +80,8 @@ def CreateBaseFood(pos,angle,size,food_type):
     new_food.setSize(size)
     new_food.UpdateHitbox()
     new_food.setOutline((np.clip(new_food.getColor()[0]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[1]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[2]+random.randint(-25,25),0,255)))
+    Edges.append(Edge(parent=new_food,isLeft=True))
+    Edges.append(Edge(parent=new_food,isLeft=False))
     return new_food
 
 def CreateFood(pos,angle,size,energy,food):
@@ -104,7 +108,8 @@ def CreateFood(pos,angle,size,energy,food):
     new_food.UpdateHitbox()
     new_food.setEnergy(energy)
     new_food.setOutline((np.clip(new_food.getColor()[0]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[1]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[2]+random.randint(-25,25),0,255)))
-
+    Edges.append(Edge(parent=new_food,isLeft=True))
+    Edges.append(Edge(parent=new_food,isLeft=False))
     return new_food
 
 def SortTiles():
@@ -213,7 +218,8 @@ def CheckIfDead():
     i=len(Foods)-1
     while i>=0:
         if(Foods[i].DeathTest()):
-            Foods.pop(i)
+            wipe = Foods.pop(i)
+            wipe._remove=True
         i-=1
 
 def FoodUpdate():
@@ -278,7 +284,8 @@ def MergeClusters(i,j):
                 Foods[i]=a
         if(Foods[i].getMaxSZ()<4):
             Foods[i].Merge(Foods[j])
-            Foods.pop(j)
+            wipe=Foods.pop(j)
+            wipe._remove=True
             return True
     return False
 
@@ -289,7 +296,12 @@ def CollisionHandler():
     for i in Foods:
         if(type(i) in [Plant,PlantCluster]):
             i.setNbr(0.0)
+    #ToDo1: MergeClusters and old on-collision behavior relies on order and behavior of original collision checking to ensure array bounds and non-skipping.  Breaks with SAP.
+##    SweepAndPrune()
+    OldCollision()
 
+def OldCollision():
+    global Foods
     i=len(Foods)-1
     while i>=0:
         j=len(Foods)-1
@@ -328,9 +340,70 @@ def CollisionHandler():
             j-=1
         i-=1
 
-def SweepAndPrune(edges):
+def onCollide(obj1,obj2):
+    global Foods
+    if(isinstance(obj1,Food) and isinstance(obj2,Food)):
+        i = Foods.index(obj1)
+        j = Foods.index(obj2)
+        print('-----------',len(Foods))
+        print('i',i,' j',j)
+        if type(Foods[i]) in [FoodCluster,PlantCluster,MushroomCluster]:
+            if(MergeClusters(i,j)):
+                j-=1
+                return
+        elif type(Foods[j]) in [FoodCluster,PlantCluster,MushroomCluster]:
+            if(MergeClusters(j,i)):
+                j-=1
+                return
+        else:
+            if(MergeClusters(i,j)):
+                j-=1
+                return
+        print('i',i,' j',j)
+        if(type(Foods[i]) in [Plant,PlantCluster] and type(Foods[j]) in [Plant,PlantCluster]):
+            if (Foods[i].getId()=="Tree" and Foods[j].getId()=="Tree"):
+                Foods[j].setNbr(Foods[j].getNbr()+Foods[i].getMaxEN()/2400)
+                Foods[i].setNbr(Foods[i].getNbr()+Foods[j].getMaxEN()/2400)
+            else:
+                if (Foods[j].getId()=="Tree"):
+                    Foods[j].setNbr(Foods[j].getNbr()+Foods[i].getMaxEN()/900)
+                else:
+                    Foods[j].setNbr(Foods[j].getNbr()+Foods[i].getMaxEN()/450)
+                if (Foods[i].getId()=="Tree"):
+                    Foods[i].setNbr(Foods[i].getNbr()+Foods[j].getMaxEN()/900)
+                else:
+                    Foods[i].setNbr(Foods[i].getNbr()+Foods[j].getMaxEN()/450)
+        print('-----------')
+
+
+def SweepAndPrune():
     #TODO SAP good
-    pass
+
+    touching = set()
+    for edge in Edges:
+        if(edge.isLeft):
+            for other in touching:
+                if(pygame.Rect.colliderect(edge.parent.getDim(),other.getDim())):
+                    onCollide(edge.parent,other)#break;
+                    #do polygon collision
+
+            touching.add(edge.parent)
+        else:
+            touching.remove(edge.parent)
+
+
+
+def UpdateEdges():
+    #Edge class supports Y axis to ease adding Y sweep if we want a full 2D SAP
+    #This method does not currently because i'm not adding that complexity right now
+    global Edges
+    Edges = [edge for edge in Edges if not edge.parent._remove]
+    for edge in Edges:
+        edge.pos = edge.parent.getDim().left if edge.isLeft else edge.parent.getDim().right
+    Edges.sort(key=Edge.sortEdge)
+    print([str(edge) for edge in Edges])
+
+
 
 def FoodReproduce():
     #Creates more food from the other foods in the simulation
@@ -475,7 +548,7 @@ screen.blit(dayscreen,(0,0))
 Terrain=[]
 Foods=[]
 Creatures=[]
-
+Edges=[]
 Base_Terrain=[]
 
 Base_Creatures=[]
