@@ -80,8 +80,6 @@ def CreateBaseFood(pos,angle,size,food_type):
     new_food.setSize(size)
     new_food.UpdateHitbox()
     new_food.setOutline((np.clip(new_food.getColor()[0]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[1]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[2]+random.randint(-25,25),0,255)))
-    #Edges.append(Edge(parent=new_food,isLeft=True))
-    #Edges.append(Edge(parent=new_food,isLeft=False))
     return new_food
 
 def CreateFood(pos,angle,size,energy,food):
@@ -108,8 +106,6 @@ def CreateFood(pos,angle,size,energy,food):
     new_food.UpdateHitbox()
     new_food.setEnergy(energy)
     new_food.setOutline((np.clip(new_food.getColor()[0]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[1]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[2]+random.randint(-25,25),0,255)))
-    #Edges.append(Edge(parent=new_food,isLeft=True))
-    #Edges.append(Edge(parent=new_food,isLeft=False))
     return new_food
 
 def SortTiles():
@@ -345,7 +341,7 @@ def PolyToLine(poly):
     lines=[]
     poly_len=len(poly)
 
-    print([str(i) for i in poly])
+##    print([str(i) for i in poly])
 
     for i in range(poly_len):
         lines.append(Line(Point(poly[i][0],poly[i][1]),Point(poly[(i+1)%poly_len][0],poly[(i+1)%poly_len][1])))
@@ -746,7 +742,6 @@ try:
 
         for i in test_terrain:
             pygame.draw.rect(screen,i.getColor(),i.getDim())
-            #pygame.draw.rect(screen,red,i.getDim(),2)
 
         #for i in test_shapes:
             #pygame.draw.polygon(screen,i.getOutline(),i.getHitbox(),3)
