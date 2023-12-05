@@ -47,7 +47,7 @@ def UpdateTime():
     FoodUpdate()
     CheckIfDead()
     CollisionHandler()
-    UpdateEdges()
+##    UpdateEdges()
 ##    SweepAndPrune()
 
 def CreateBaseFood(pos,angle,size,food_type):
@@ -80,8 +80,8 @@ def CreateBaseFood(pos,angle,size,food_type):
     new_food.setSize(size)
     new_food.UpdateHitbox()
     new_food.setOutline((np.clip(new_food.getColor()[0]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[1]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[2]+random.randint(-25,25),0,255)))
-    Edges.append(Edge(parent=new_food,isLeft=True))
-    Edges.append(Edge(parent=new_food,isLeft=False))
+    #Edges.append(Edge(parent=new_food,isLeft=True))
+    #Edges.append(Edge(parent=new_food,isLeft=False))
     return new_food
 
 def CreateFood(pos,angle,size,energy,food):
@@ -108,8 +108,8 @@ def CreateFood(pos,angle,size,energy,food):
     new_food.UpdateHitbox()
     new_food.setEnergy(energy)
     new_food.setOutline((np.clip(new_food.getColor()[0]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[1]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[2]+random.randint(-25,25),0,255)))
-    Edges.append(Edge(parent=new_food,isLeft=True))
-    Edges.append(Edge(parent=new_food,isLeft=False))
+    #Edges.append(Edge(parent=new_food,isLeft=True))
+    #Edges.append(Edge(parent=new_food,isLeft=False))
     return new_food
 
 def SortTiles():
@@ -289,55 +289,6 @@ def MergeClusters(i,j):
             return True
     return False
 
-def MergeClustersObj(objInd1, objInd2):
-    global Foods, Remove_Colliding_Indexes
-##    ret = (obj1,obj2)
-    if(Foods[objInd1]._remove or Foods[objInd2]._remove):
-        return False
-    if(Foods[objInd1].getId()==Foods[objInd2].getId() and type(Foods[objInd2]) in [Food,Plant,Mushroom]):
-        a=Foods[objInd1]
-        if not type(Foods[objInd1]) in [FoodCluster,PlantCluster,MushroomCluster]:
-            if type(Foods[objInd1]) is Food:
-                a=FoodCluster()
-                a.setClusterFood(Foods[objInd1])
-                if(Foods[objInd1].getId()=="Meat"):
-                    a.setShape(shapes[Foods[objInd1].getId()][1])
-                elif(Foods[objInd1].getId()=="Bone"):
-                    a.setShape(shapes[Foods[objInd1].getId()][1])
-                Foods[objInd1]=a
-            if type(Foods[objInd1]) is Plant:
-                a=PlantCluster()
-                a.setClusterFood(Foods[objInd1])
-                if(Foods[objInd1].getId()=="Grass"):
-                    a.setShape(shapes[Foods[objInd1].getId()][1])
-                elif(Foods[objInd1].getId()=="Bush"):
-                    a.setShape(shapes[Foods[objInd1].getId()][1])
-                elif(Foods[objInd1].getId()=="Tree"):
-                    a.setShape(shapes[Foods[objInd1].getId()][1])
-                elif(Foods[objInd1].getId()=="Kelp"):
-                    a.setShape(shapes[Foods[objInd1].getId()][1])
-                Foods[objInd1]=a
-            if type(Foods[objInd1]) is Mushroom:
-                a=MushroomCluster()
-                a.setClusterFood(Foods[objInd1])
-                if(Foods[objInd1].getId()=="Mushroom"):
-                    a.setShape(shapes[Foods[objInd1].getId()][1])
-                Foods[objInd1]=a
-        if(Foods[objInd1].getMaxSZ()<4):
-            Foods[objInd1].Merge(Foods[objInd2])
-            Foods[objInd2]._remove=True
-            Remove_Colliding_Indexes.add(objInd2)
-##            Foods.remove(obj2)
-##            ret[0]=obj1
-##            ret[1]._remove=True
-            return True
-    return False
-
-def ClearColliding():
-    global Food,Remove_Colliding_Indexes
-    for colliding in Remove_Colliding_Indexes:
-        Food.remove(Food[colliding])
-
 def CollisionHandler():
     #Handles collision between all objects
     global Foods
@@ -346,8 +297,7 @@ def CollisionHandler():
         if(type(i) in [Plant,PlantCluster]):
             i.setNbr(0.0)
     #ToDo1: MergeClusters and old on-collision behavior relies on order and behavior of original collision checking to ensure array bounds and non-skipping.  Breaks with SAP.
-    SweepAndPrune()
-##    OldCollision()
+    SweepAndPrune(Foods)
 
 def OldCollision():
     global Foods
@@ -389,79 +339,172 @@ def OldCollision():
             j-=1
         i-=1
 
-def onCollide(objInd1,objInd2):
-    global Foods
-    if(isinstance(Foods[objInd1],Food) and isinstance(Foods[objInd2],Food)):
-        i=0
-        j=0
-##        if(Foods.count(Foods[objInd1]) > 0 and Foods.count(Foods[objInd2]) > 0):
-##            i = Foods.index(Foods[objInd1])
-##            j = Foods.index(Foods[objInd2])
-##        else:
-##            return
-##        print('-----------',len(Foods))
-##        print('i',i,' j',j)
-        if type(Foods[objInd1]) in [FoodCluster,PlantCluster,MushroomCluster]:
-            if(MergeClustersObj(objInd1,objInd2)):
-##                j-=1
-                return
-        elif type(Foods[objInd2]) in [FoodCluster,PlantCluster,MushroomCluster]:
-            if(MergeClustersObj(objInd2,objInd1)):
-##                j-=1
-                return
+def PolyToLine(poly):
+    #Takes a set of points from a polygon and converts it into a set of lines that define the polygon
+
+    lines=[]
+    poly_len=len(poly)
+
+    print([str(i) for i in poly])
+
+    for i in range(poly_len):
+        lines.append(Line(Point(poly[i][0],poly[i][1]),Point(poly[(i+1)%poly_len][0],poly[(i+1)%poly_len][1])))
+
+    return lines
+
+def PolyPolyCollison(a,b):
+    #Detects collisions between 2 polygons
+
+    a1=PolyToLine(a)
+    b1=PolyToLine(b)
+
+    for i in b1:
+        if PolyLineCollision(a1,i):
+            return True
+
+    return False
+
+def PolyLineCollision(p,l):
+    #Detects collisions between a polygon and a line
+
+    for i in p:
+        if LineLineCollision(i.getA()[0],i.getA()[1],i.getB()[0],i.getB()[1],l.getA()[0],l.getA()[1],l.getB()[0],l.getB()[1]):
+            return True
+
+    return False
+
+def LineLineCollision(Ax1,Ay1,Ax2,Ay2,Bx1,By1,Bx2,By2):
+    #Detects collisions between 2 lines
+
+    d=(By2-By1)*(Ax2-Ax1)-(Bx2-Bx1)*(Ay2-Ay1)
+    if d:
+        uA=((Bx2-Bx1)*(Ay1-By1)-(By2-By1)*(Ax1-Bx1))/d
+        uB=((Ax2-Ax1)*(Ay1-By1)-(Ay2-Ay1)*(Ax1-Bx1))/d
+    else:
+        return False
+    if not(0<=uA<=1 and 0<=uB<=1):
+        return False
+    return True
+
+def SweepAndPrune(obj_list):
+    #better collision
+
+    if len(obj_list)<=0:
+        return
+
+    horizontal=SAPListEdges(obj_list,True)
+
+    vertical=SAPListEdges(obj_list,False)
+    h_var=SAPEdgeVariance(horizontal)
+    v_var=SAPEdgeVariance(vertical)
+
+    if(h_var>v_var):
+        SAPCheckEdges(horizontal)
+    else:
+        SAPCheckEdges(vertical)
+
+def SAPListEdges(obj_list,axis):
+    #creates a list for SAP of all edges of objects
+
+    edges=[]
+
+    if axis:
+        for i in obj_list:
+            l=Edge(i.getDim().left,False,i)
+            r=Edge(i.getDim().right,True,i)
+
+            edges.append(l)
+            edges.append(r)
+
+    else:
+        for i in obj_list:
+            t=Edge(i.getDim().top,False,i)
+            b=Edge(i.getDim().bottom,True,i)
+
+            edges.append(t)
+            edges.append(b)
+
+    edges.sort(key=Edge.getPos)
+
+    return edges
+
+def SAPEdgeVariance(a):
+    #Finds the variance between spacing of edges
+
+    mean=0.0
+    variance=0.0
+
+    for i in a:
+        mean+=i.getPos()
+    mean/=len(a)
+    for i in a:
+        variance+=math.pow(i.getPos()-mean,2)
+    variance=math.sqrt(variance/len(a))
+
+    return variance
+
+def SAPCheckEdges(edge_list):
+    #Calculates which shapes are colliding
+
+    check=[]
+
+    for i in edge_list:
+        if i.getStop():
+            if i.getParent() in check:
+                check.remove(i.getParent())
         else:
-            if(MergeClustersObj(objInd1,objInd2)):
-##                j-=1
-                return
-##        print('i',i,' j',j)
-        if(type(Foods[objInd1]) in [Plant,PlantCluster] and type(Foods[objInd2]) in [Plant,PlantCluster]):
-            if (Foods[objInd1].getId()=="Tree" and Foods[objInd2].getId()=="Tree"):
-                Foods[objInd2].setNbr(Foods[objInd2].getNbr()+Foods[objInd1].getMaxEN()/2400)
-                Foods[objInd1].setNbr(Foods[objInd1].getNbr()+Foods[objInd2].getMaxEN()/2400)
+            SAPBoxCollison(i.getParent(),check)
+            if i.getParent()._remove:
+                continue
             else:
-                if (Foods[objInd2].getId()=="Tree"):
-                    Foods[objInd2].setNbr(Foods[objInd2].getNbr()+Foods[objInd1].getMaxEN()/900)
-                else:
-                    Foods[objInd2].setNbr(Foods[objInd2].getNbr()+Foods[objInd1].getMaxEN()/450)
-                if (Foods[objInd1].getId()=="Tree"):
-                    Foods[objInd1].setNbr(Foods[objInd1].getNbr()+Foods[objInd2].getMaxEN()/900)
-                else:
-                    Foods[objInd1].setNbr(Foods[objInd1].getNbr()+Foods[objInd2].getMaxEN()/450)
-        print('-----------')
+                check.append(i.getParent())
 
+def SAPBoxCollison(a,check_list):
+    #checks if current object is colliding with any objects in list
 
-def SweepAndPrune():
-    #TODO SAP good
+    if len(check_list)<=0:
+        return
 
-    touching = set()
-    for edge in Edges[:]:
-        print([str(oth) for oth in touching])
-        if(edge.isLeft):
-            for other in touching:
-##                print(other in Foods)
-##                print([str(oth) for oth in touching])
-##                print([str(food) for food in Foods])
-                if(pygame.Rect.colliderect(edge.parent.getDim(),Foods[other].getDim())):
-                    onCollide(Foods.index(edge.parent),other)#break;
-##                    UpdateEdges()
-                    #do polygon collision
+    for i in check_list:
+        if(a.getDim().colliderect(i.getDim())):
+            if PolyPolyCollison(a.getHitbox(),i.getHitbox()):
+                SAPCollide(a,i)
+                i._remove=True
 
-            touching.add(Foods.index(edge.parent))
+def SAPCollide(a,b):
+    #Runs what happens when 2 objects collide
+
+    if type(a) in [FoodCluster,PlantCluster,MushroomCluster]:
+        MergeClusters(a,b)
+    elif type(b) in [FoodCluster,PlantCluster,MushroomCluster]:
+        MergeClusters(b,a)
+    else:
+        MergeClusters(a,b)
+
+    if (type(a) in [Plant,PlantCluster] and type(b) in [Plant,PlantCluster]):
+        if (a.getId()=="Tree" and b.getId()=="Tree"):
+            a.setNbr(a.getNbr()+b.getMaxEN()/2400)
+            b.setNbr(b.getNbr()+a.getMaxEN()/2400)
         else:
-            touching.remove(Foods.index(edge.parent))
-    ClearColliding()
+            if a.getId()=="Tree":
+                a.setNbr(a.getNbr()+b.getMaxEN()/900)
+            else:
+                a.setNbr(a.getNbr()+b.getMaxEN()/450)
+            if b.getId()=="Tree":
+                b.setNbr(b.getNbr()+a.getMaxEN()/900)
+            else:
+                b.setNbr(b.getNbr()+a.getMaxEN()/450)
 
 
 
-def UpdateEdges():
-    #Edge class supports Y axis to ease adding Y sweep if we want a full 2D SAP
-    #This method does not currently because i'm not adding that complexity right now
-    global Edges
-    Edges = [edge for edge in Edges if not edge.parent._remove]
-    for edge in Edges:
-        edge.pos = edge.parent.getDim().left if edge.isLeft else edge.parent.getDim().right
-    Edges.sort(key=Edge.sortEdge)
-    print([str(edge) for edge in Edges])
+
+
+
+
+
+
+
+
 
 
 
@@ -631,29 +674,8 @@ test_terrain.append(Tile(pos=Point(tile_size*10,tile_size*6),shape=[Point(tile_o
 
 MergeTiles()
 
-test_grass=Plant(pos=Point(50,s_height/2),size=2,shape=cluster_Grass,outline=c_grass,obj_id="Grass")
-test_bush=Plant(pos=Point(100,s_height/2),size=2,shape=cluster_Bush,outline=c_bush,obj_id="Bush")
-test_tree=Plant(pos=Point(150,s_height/2),size=2,shape=cluster_Tree,outline=c_tree,obj_id="Tree")
-test_fruit=Plant(pos=Point(200,s_height/2),shape=[Point(-5,0),Point(0,5),Point(5,0),Point(0,-5)],outline=c_fruit,obj_id="Fruit")
-test_kelp=Plant(pos=Point(250,s_height/2),size=2,shape=cluster_Kelp,outline=green,obj_id="Kelp")
-test_poison=Plant(pos=Point(300,s_height/2),shape=[Point(-10,0),Point(0,10),Point(10,0),Point(0,-10)],outline=c_poison,obj_id="Poison")
-
-test_mushroom=Food(pos=Point(350,s_height/2),size=2,shape=cluster_Mushroom,outline=c_mushroom,obj_id="Mushroom")
-test_fungus=Food(pos=Point(400,s_height/2),shape=[Point(0,0),Point(11,-6),Point(-11,-6)],outline=c_fungus,obj_id="Fungus")
-
-test_meat=Food(pos=Point(450,s_height/2),size=2,shape=cluster_Meat,outline=c_meat,obj_id="Meat")
-test_bone=Food(pos=Point(500,s_height/2),size=2,shape=cluster_Bone,outline=white,obj_id="Bone")
-
-test_egg=Food(pos=Point(550,s_height/2),shape=[Point(-5,1),Point(0,3),Point(5,1),Point(0,-8)],outline=c_egg,obj_id="Egg")
-test_bug=PreyFood(pos=Point(600,s_height/2),shape=[Point(-5,-2),Point(-5,2),Point(5,2),Point(5,-2)],outline=c_bug,obj_id="Bug")
-test_fish=PreyFood(pos=Point(650,s_height/2),shape=[Point(-8,-4),Point(-8,4),Point(8,4),Point(8,-4)],outline=black,obj_id="Fish")
-
-
-test_shapes=[test_grass,test_bush,test_tree,test_fruit,test_kelp,test_poison,test_mushroom,test_fungus,test_meat,test_bone,test_egg,test_bug,test_fish]
-
 try:
     while running:
-##        sys.stdout.flush()
         clock.tick(Globals.fps)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -719,8 +741,6 @@ try:
 
 
         UpdateTime()
-        for i in test_terrain:
-            i.UpdateHitbox()
 
         screen.fill(c_background)
 

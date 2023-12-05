@@ -36,8 +36,30 @@ class Point:
         self.a=p[0]
         self.b=p[1]
 
+class Line:
+    #A simple 2D line
+    def __init__(self,a=Point(),b=Point()):
+        self.a=a
+        self.b=b
+    def __str__(self):
+        return f'[{self.a} , {self.b}]'
+
+    def getA(self):
+        return self.a.getPoint()
+    def getB(self):
+        return self.b.getPoint()
+    def getLine(self):
+        return [self.a.getPoint(),self.b.getPoint()]
+
+    def setA(self,a):
+        self.a=a.setPoint()
+    def setB(self,b):
+        self.b=b.setPoint()
+    def setLine(self,line):
+        self.a=line[0].getPoint()
+        self.b=line[1].getPoint()
+
 class Object:
-    instances = dict()
     #Base object type for anything interactable in the simulation
     def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,immortal=False):
         if color is None:
@@ -66,9 +88,7 @@ class Object:
         self.max_health=max_health
         self.max_energy=max_energy
         self.immortal=immortal
-        self._remove = False
-##        print(id(self))
-        Object.instances.update({str(id(self)): self})
+        self._remove=False
     def __str__(self):
         if(self.immortal):
             return f'Object:\"{self.obj_id}\"🗹\t [Pos:{self.pos}, Speed:{self.delta}, Size:{self.size}, Health:{self.health}/{self.max_health}, Energy:{self.energy}/{self.max_energy}, Mass:{self.mass}, Friction:{self.friction}]'
@@ -226,17 +246,33 @@ class Tile(Object):
         self.tile=copy[1]
 
 class Edge:
-    #An edge of an Object
-    def __init__(self,parent=None,isLeft=True,xAxis=True):
-        self.parent=Object.instances.get(str(id(parent)))
-        self.isLeft=isLeft
-        self.xAxis=xAxis
-        self.pos= self.parent.getDim().left if self.isLeft else self.parent.getDim().right if self.xAxis else self.parent.getDim().top if self.isLeft else self.parent.getDim().bottom
+    #An Edge line for an object
+    def __init__(self,pos,stop,parent):
+        self.pos=pos
+        self.stop=stop
+        self.parent=parent
     def __str__(self):
-        return f' ({self.pos} ' if self.isLeft else f' {self.pos}) '
-    @staticmethod
-    def sortEdge(edge):
-        return edge.pos
+        return f'{self.parent.getId()}: {self.pos}, {self.stop}'
+
+    def getPos(self):
+        return self.pos
+    def getStop(self):
+        return self.stop
+    def getParent(self):
+        return self.parent
+
+    def getEdgeCopy(self):
+        return [self.pos,self.stop,self.parent]
+    def setPos(self,pos):
+        self.pos=pos
+    def setStop(self,stop):
+        self.stop=stop
+    def setParent(self,parent):
+        self.parent=parent
+    def setEdgeCopy(self,copy):
+        self.pos=copy[0]
+        self.stop=copy[1]
+        self.parent=copy[2]
 
 
 #Initialize Pygame
