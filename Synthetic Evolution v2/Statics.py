@@ -37,6 +37,7 @@ class Point:
         self.b=p[1]
 
 class Object:
+    instances = dict()
     #Base object type for anything interactable in the simulation
     def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,immortal=False):
         if color is None:
@@ -66,6 +67,8 @@ class Object:
         self.max_energy=max_energy
         self.immortal=immortal
         self._remove = False
+##        print(id(self))
+        Object.instances.update({str(id(self)): self})
     def __str__(self):
         if(self.immortal):
             return f'Object:\"{self.obj_id}\"🗹\t [Pos:{self.pos}, Speed:{self.delta}, Size:{self.size}, Health:{self.health}/{self.max_health}, Energy:{self.energy}/{self.max_energy}, Mass:{self.mass}, Friction:{self.friction}]'
@@ -225,7 +228,7 @@ class Tile(Object):
 class Edge:
     #An edge of an Object
     def __init__(self,parent=None,isLeft=True,xAxis=True):
-        self.parent=parent
+        self.parent=Object.instances.get(str(id(parent)))
         self.isLeft=isLeft
         self.xAxis=xAxis
         self.pos= self.parent.getDim().left if self.isLeft else self.parent.getDim().right if self.xAxis else self.parent.getDim().top if self.isLeft else self.parent.getDim().bottom

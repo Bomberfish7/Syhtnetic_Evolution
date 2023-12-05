@@ -28,6 +28,8 @@ cluster_classes=[FoodCluster,PlantCluster,MushroomCluster]
 
 Base_Foods=[]
 
+Remove_Colliding_Indexes=set()
+
 ##Foods
 #Plants
 base_Grass=Plant(shape=[Point(-5,0),Point(5,0),Point(0,-18)],outline=c_grass,obj_id="Grass",max_health=45,max_energy=30,digestion_speed=5.0,energy_regen=0.25)

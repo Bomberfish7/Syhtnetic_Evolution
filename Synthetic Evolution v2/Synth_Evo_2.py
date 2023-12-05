@@ -289,6 +289,55 @@ def MergeClusters(i,j):
             return True
     return False
 
+def MergeClustersObj(objInd1, objInd2):
+    global Foods, Remove_Colliding_Indexes
+##    ret = (obj1,obj2)
+    if(Foods[objInd1]._remove or Foods[objInd2]._remove):
+        return False
+    if(Foods[objInd1].getId()==Foods[objInd2].getId() and type(Foods[objInd2]) in [Food,Plant,Mushroom]):
+        a=Foods[objInd1]
+        if not type(Foods[objInd1]) in [FoodCluster,PlantCluster,MushroomCluster]:
+            if type(Foods[objInd1]) is Food:
+                a=FoodCluster()
+                a.setClusterFood(Foods[objInd1])
+                if(Foods[objInd1].getId()=="Meat"):
+                    a.setShape(shapes[Foods[objInd1].getId()][1])
+                elif(Foods[objInd1].getId()=="Bone"):
+                    a.setShape(shapes[Foods[objInd1].getId()][1])
+                Foods[objInd1]=a
+            if type(Foods[objInd1]) is Plant:
+                a=PlantCluster()
+                a.setClusterFood(Foods[objInd1])
+                if(Foods[objInd1].getId()=="Grass"):
+                    a.setShape(shapes[Foods[objInd1].getId()][1])
+                elif(Foods[objInd1].getId()=="Bush"):
+                    a.setShape(shapes[Foods[objInd1].getId()][1])
+                elif(Foods[objInd1].getId()=="Tree"):
+                    a.setShape(shapes[Foods[objInd1].getId()][1])
+                elif(Foods[objInd1].getId()=="Kelp"):
+                    a.setShape(shapes[Foods[objInd1].getId()][1])
+                Foods[objInd1]=a
+            if type(Foods[objInd1]) is Mushroom:
+                a=MushroomCluster()
+                a.setClusterFood(Foods[objInd1])
+                if(Foods[objInd1].getId()=="Mushroom"):
+                    a.setShape(shapes[Foods[objInd1].getId()][1])
+                Foods[objInd1]=a
+        if(Foods[objInd1].getMaxSZ()<4):
+            Foods[objInd1].Merge(Foods[objInd2])
+            Foods[objInd2]._remove=True
+            Remove_Colliding_Indexes.add(objInd2)
+##            Foods.remove(obj2)
+##            ret[0]=obj1
+##            ret[1]._remove=True
+            return True
+    return False
+
+def ClearColliding():
+    global Food,Remove_Colliding_Indexes
+    for colliding in Remove_Colliding_Indexes:
+        Food.remove(Food[colliding])
+
 def CollisionHandler():
     #Handles collision between all objects
     global Foods
@@ -297,8 +346,8 @@ def CollisionHandler():
         if(type(i) in [Plant,PlantCluster]):
             i.setNbr(0.0)
     #ToDo1: MergeClusters and old on-collision behavior relies on order and behavior of original collision checking to ensure array bounds and non-skipping.  Breaks with SAP.
-##    SweepAndPrune()
-    OldCollision()
+    SweepAndPrune()
+##    OldCollision()
 
 def OldCollision():
     global Foods
@@ -340,39 +389,44 @@ def OldCollision():
             j-=1
         i-=1
 
-def onCollide(obj1,obj2):
+def onCollide(objInd1,objInd2):
     global Foods
-    if(isinstance(obj1,Food) and isinstance(obj2,Food)):
-        i = Foods.index(obj1)
-        j = Foods.index(obj2)
-        print('-----------',len(Foods))
-        print('i',i,' j',j)
-        if type(Foods[i]) in [FoodCluster,PlantCluster,MushroomCluster]:
-            if(MergeClusters(i,j)):
-                j-=1
+    if(isinstance(Foods[objInd1],Food) and isinstance(Foods[objInd2],Food)):
+        i=0
+        j=0
+##        if(Foods.count(Foods[objInd1]) > 0 and Foods.count(Foods[objInd2]) > 0):
+##            i = Foods.index(Foods[objInd1])
+##            j = Foods.index(Foods[objInd2])
+##        else:
+##            return
+##        print('-----------',len(Foods))
+##        print('i',i,' j',j)
+        if type(Foods[objInd1]) in [FoodCluster,PlantCluster,MushroomCluster]:
+            if(MergeClustersObj(objInd1,objInd2)):
+##                j-=1
                 return
-        elif type(Foods[j]) in [FoodCluster,PlantCluster,MushroomCluster]:
-            if(MergeClusters(j,i)):
-                j-=1
+        elif type(Foods[objInd2]) in [FoodCluster,PlantCluster,MushroomCluster]:
+            if(MergeClustersObj(objInd2,objInd1)):
+##                j-=1
                 return
         else:
-            if(MergeClusters(i,j)):
-                j-=1
+            if(MergeClustersObj(objInd1,objInd2)):
+##                j-=1
                 return
-        print('i',i,' j',j)
-        if(type(Foods[i]) in [Plant,PlantCluster] and type(Foods[j]) in [Plant,PlantCluster]):
-            if (Foods[i].getId()=="Tree" and Foods[j].getId()=="Tree"):
-                Foods[j].setNbr(Foods[j].getNbr()+Foods[i].getMaxEN()/2400)
-                Foods[i].setNbr(Foods[i].getNbr()+Foods[j].getMaxEN()/2400)
+##        print('i',i,' j',j)
+        if(type(Foods[objInd1]) in [Plant,PlantCluster] and type(Foods[objInd2]) in [Plant,PlantCluster]):
+            if (Foods[objInd1].getId()=="Tree" and Foods[objInd2].getId()=="Tree"):
+                Foods[objInd2].setNbr(Foods[objInd2].getNbr()+Foods[objInd1].getMaxEN()/2400)
+                Foods[objInd1].setNbr(Foods[objInd1].getNbr()+Foods[objInd2].getMaxEN()/2400)
             else:
-                if (Foods[j].getId()=="Tree"):
-                    Foods[j].setNbr(Foods[j].getNbr()+Foods[i].getMaxEN()/900)
+                if (Foods[objInd2].getId()=="Tree"):
+                    Foods[objInd2].setNbr(Foods[objInd2].getNbr()+Foods[objInd1].getMaxEN()/900)
                 else:
-                    Foods[j].setNbr(Foods[j].getNbr()+Foods[i].getMaxEN()/450)
-                if (Foods[i].getId()=="Tree"):
-                    Foods[i].setNbr(Foods[i].getNbr()+Foods[j].getMaxEN()/900)
+                    Foods[objInd2].setNbr(Foods[objInd2].getNbr()+Foods[objInd1].getMaxEN()/450)
+                if (Foods[objInd1].getId()=="Tree"):
+                    Foods[objInd1].setNbr(Foods[objInd1].getNbr()+Foods[objInd2].getMaxEN()/900)
                 else:
-                    Foods[i].setNbr(Foods[i].getNbr()+Foods[j].getMaxEN()/450)
+                    Foods[objInd1].setNbr(Foods[objInd1].getNbr()+Foods[objInd2].getMaxEN()/450)
         print('-----------')
 
 
@@ -380,16 +434,22 @@ def SweepAndPrune():
     #TODO SAP good
 
     touching = set()
-    for edge in Edges:
+    for edge in Edges[:]:
+        print([str(oth) for oth in touching])
         if(edge.isLeft):
             for other in touching:
-                if(pygame.Rect.colliderect(edge.parent.getDim(),other.getDim())):
-                    onCollide(edge.parent,other)#break;
+##                print(other in Foods)
+##                print([str(oth) for oth in touching])
+##                print([str(food) for food in Foods])
+                if(pygame.Rect.colliderect(edge.parent.getDim(),Foods[other].getDim())):
+                    onCollide(Foods.index(edge.parent),other)#break;
+##                    UpdateEdges()
                     #do polygon collision
 
-            touching.add(edge.parent)
+            touching.add(Foods.index(edge.parent))
         else:
-            touching.remove(edge.parent)
+            touching.remove(Foods.index(edge.parent))
+    ClearColliding()
 
 
 
