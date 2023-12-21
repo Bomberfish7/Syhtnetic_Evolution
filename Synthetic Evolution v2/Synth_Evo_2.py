@@ -249,45 +249,6 @@ def PointInPolygon(point,poly):
     #Finds if a point is inside a polygon
     pass
 #^^  Unfinished  ^^
-def MergeClusters(i,j):
-    #Merges like foods into clusters
-    global Foods
-
-    if(Foods[i].getId()==Foods[j].getId() and type(Foods[j]) in [Food,Plant,Mushroom]):
-        a=Foods[i]
-        if not type(Foods[i]) in [FoodCluster,PlantCluster,MushroomCluster]:
-            if type(Foods[i]) is Food:
-                a=FoodCluster()
-                a.setClusterFood(Foods[i])
-                if(Foods[i].getId()=="Meat"):
-                    a.setShape(shapes[Foods[i].getId()][1])
-                elif(Foods[i].getId()=="Bone"):
-                    a.setShape(shapes[Foods[i].getId()][1])
-                Foods[i]=a
-            if type(Foods[i]) is Plant:
-                a=PlantCluster()
-                a.setClusterFood(Foods[i])
-                if(Foods[i].getId()=="Grass"):
-                    a.setShape(shapes[Foods[i].getId()][1])
-                elif(Foods[i].getId()=="Bush"):
-                    a.setShape(shapes[Foods[i].getId()][1])
-                elif(Foods[i].getId()=="Tree"):
-                    a.setShape(shapes[Foods[i].getId()][1])
-                elif(Foods[i].getId()=="Kelp"):
-                    a.setShape(shapes[Foods[i].getId()][1])
-                Foods[i]=a
-            if type(Foods[i]) is Mushroom:
-                a=MushroomCluster()
-                a.setClusterFood(Foods[i])
-                if(Foods[i].getId()=="Mushroom"):
-                    a.setShape(shapes[Foods[i].getId()][1])
-                Foods[i]=a
-        if(Foods[i].getMaxSZ()<4):
-            Foods[i].Merge(Foods[j])
-            wipe=Foods.pop(j)
-            wipe._remove=True
-            return True
-    return False
 
 def CollisionHandler():
     #Handles collision between all objects
@@ -345,8 +306,6 @@ def PolyToLine(poly):
     lines=[]
     poly_len=len(poly)
 
-    print([str(i) for i in poly])
-
     for i in range(poly_len):
         lines.append(Line(Point(poly[i][0],poly[i][1]),Point(poly[(i+1)%poly_len][0],poly[(i+1)%poly_len][1])))
 
@@ -402,6 +361,8 @@ def SweepAndPrune(obj_list):
         SAPCheckEdges(horizontal)
     else:
         SAPCheckEdges(vertical)
+
+    SAPRemove(obj_list)
 
 def SAPListEdges(obj_list,axis):
     #creates a list for SAP of all edges of objects
@@ -469,7 +430,6 @@ def SAPBoxCollison(a,check_list):
         if(a.getDim().colliderect(i.getDim())):
             if PolyPolyCollison(a.getHitbox(),i.getHitbox()):
                 SAPCollide(a,i)
-                i._remove=True
 
 def SAPCollide(a,b):
     #Runs what happens when 2 objects collide
@@ -481,7 +441,7 @@ def SAPCollide(a,b):
     else:
         MergeClusters(a,b)
 
-    if (type(a) in [Plant,PlantCluster] and type(b) in [Plant,PlantCluster]):
+    if (type(a) in [Plant,PlantCluster] and type(b) in [Plant,PlantCluster] and a._remove==False and b._remove==False):
         if (a.getId()=="Tree" and b.getId()=="Tree"):
             a.setNbr(a.getNbr()+b.getMaxEN()/2400)
             b.setNbr(b.getNbr()+a.getMaxEN()/2400)
@@ -495,8 +455,40 @@ def SAPCollide(a,b):
             else:
                 b.setNbr(b.getNbr()+a.getMaxEN()/450)
 
+def MergeClusters(a,b):
+    #Mixes food items into clusters
 
+    if type(a) in [Food,Plant,Mushroom]:
+        if type(a) is Food:
+            c=FoodCluster()
+        elif type(a) is Plant:
+            c=PlantCluster()
+        elif type(a) is Mushroom:
+            c=MushroomCluster()
+        c.setClusterFood(a)
+        c.setShape(shapes[a.getId()][1])
+    else:
+        if type(a) is FoodCluster:
+            c=FoodCluster()
+        elif type(a) is PlantCluster:
+            c=PlantCluster()
+        elif type(a) is MushroomCluster:
+            c=MushroomCluster()
+        c.setClusterCopy(a.getClusterCopy())
 
+    if c.getMaxSZ()<4:
+        c.Merge(b)
+        b._remove=True
+        Foods[Foods.index(a)]=c
+
+def SAPRemove(obj_list):
+    #Removes collided with objects
+
+    i=len(obj_list)-1
+    while i>=0:
+        if obj_list[i]._remove==True:
+            del obj_list[i]
+        i-=1
 
 
 

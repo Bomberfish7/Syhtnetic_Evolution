@@ -209,12 +209,12 @@ class FoodCluster(Food):
 
     def Merge(self,food):
         self.max_size+=1
+        self.pos=Point((self.pos.getA()+food.getPos().getA())*(1-self.getSize()/(self.getSize()+food.getSize())),(self.pos.getB()+food.getPos().getB())*(1-self.getSize()/(self.getSize()+food.getSize())))
         self.size+=food.getSize()
         self.max_energy+=food.getMaxEN()
         self.max_health+=food.getMaxHP()
         self.energy+=food.getEnergy()
         self.health+=food.getHealth()
-        self.pos=Point((self.pos.getA()+food.getPos().getA())/2,(self.pos.getB()+food.getPos().getB())/2)
         self.outline=((self.outline[0]+food.getOutline()[0])/2,(self.outline[1]+food.getOutline()[1])/2,(self.outline[2]+food.getOutline()[2])/2)
 
 class PlantCluster(Plant):
@@ -239,12 +239,12 @@ class PlantCluster(Plant):
 
     def Merge(self,food):
         self.max_size+=1
+        self.pos=Point((self.pos.getA()+food.getPos().getA())*(1-self.getSize()/(self.getSize()+food.getSize())),(self.pos.getB()+food.getPos().getB())*(1-self.getSize()/(self.getSize()+food.getSize())))
         self.size+=food.getSize()
         self.max_energy+=food.getMaxEN()
         self.max_health+=food.getMaxHP()
         self.energy+=food.getEnergy()
         self.health+=food.getHealth()
-        self.pos=Point((self.pos.getA()+food.getPos().getA())/2,(self.pos.getB()+food.getPos().getB())/2)
         self.outline=((self.outline[0]+food.getOutline()[0])/2,(self.outline[1]+food.getOutline()[1])/2,(self.outline[2]+food.getOutline()[2])/2)
     def Grow(self):
         if((self.energy_regen*self.size-self.neighbor)>0):
@@ -277,12 +277,12 @@ class MushroomCluster(Mushroom):
 
     def Merge(self,food):
         self.max_size+=1
+        self.pos=Point((self.pos.getA()+food.getPos().getA())*(1-self.getSize()/(self.getSize()+food.getSize())),(self.pos.getB()+food.getPos().getB())*(1-self.getSize()/(self.getSize()+food.getSize())))
         self.size+=food.getSize()
         self.max_energy+=food.getMaxEN()
         self.max_health+=food.getMaxHP()
         self.energy+=food.getEnergy()
         self.health+=food.getHealth()
-        self.pos=Point((self.pos.getA()+food.getPos().getA())/2,(self.pos.getB()+food.getPos().getB())/2)
         self.outline=((self.outline[0]+food.getOutline()[0])/2,(self.outline[1]+food.getOutline()[1])/2,(self.outline[2]+food.getOutline()[2])/2)
     def Grow(self):
         if((self.energy_regen*self.size-self.neighbor)>0):
