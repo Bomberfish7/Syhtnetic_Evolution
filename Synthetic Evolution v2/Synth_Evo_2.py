@@ -80,8 +80,6 @@ def CreateBaseFood(pos,angle,size,food_type):
     new_food.setSize(size)
     new_food.UpdateHitbox()
     new_food.setOutline((np.clip(new_food.getColor()[0]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[1]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[2]+random.randint(-25,25),0,255)))
-    #Edges.append(Edge(parent=new_food,isLeft=True))
-    #Edges.append(Edge(parent=new_food,isLeft=False))
     return new_food
 
 def CreateFood(pos,angle,size,energy,food):
@@ -108,8 +106,6 @@ def CreateFood(pos,angle,size,energy,food):
     new_food.UpdateHitbox()
     new_food.setEnergy(energy)
     new_food.setOutline((np.clip(new_food.getColor()[0]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[1]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[2]+random.randint(-25,25),0,255)))
-    #Edges.append(Edge(parent=new_food,isLeft=True))
-    #Edges.append(Edge(parent=new_food,isLeft=False))
     return new_food
 
 def SortTiles():
@@ -306,6 +302,11 @@ def PolyToLine(poly):
     lines=[]
     poly_len=len(poly)
 
+<<<<<<< HEAD
+=======
+##    print([str(i) for i in poly])
+
+>>>>>>> 3ad755b90517d1754de91b72f07bf10fb9d3c407
     for i in range(poly_len):
         lines.append(Line(Point(poly[i][0],poly[i][1]),Point(poly[(i+1)%poly_len][0],poly[(i+1)%poly_len][1])))
 
@@ -454,32 +455,6 @@ def SAPCollide(a,b):
                 b.setNbr(b.getNbr()+a.getMaxEN()/900)
             else:
                 b.setNbr(b.getNbr()+a.getMaxEN()/450)
-
-def MergeClusters(a,b):
-    #Mixes food items into clusters
-
-    if type(a) in [Food,Plant,Mushroom]:
-        if type(a) is Food:
-            c=FoodCluster()
-        elif type(a) is Plant:
-            c=PlantCluster()
-        elif type(a) is Mushroom:
-            c=MushroomCluster()
-        c.setClusterFood(a)
-        c.setShape(shapes[a.getId()][1])
-    else:
-        if type(a) is FoodCluster:
-            c=FoodCluster()
-        elif type(a) is PlantCluster:
-            c=PlantCluster()
-        elif type(a) is MushroomCluster:
-            c=MushroomCluster()
-        c.setClusterCopy(a.getClusterCopy())
-
-    if c.getMaxSZ()<4:
-        c.Merge(b)
-        b._remove=True
-        Foods[Foods.index(a)]=c
 
 def SAPRemove(obj_list):
     #Removes collided with objects
@@ -738,7 +713,6 @@ try:
 
         for i in test_terrain:
             pygame.draw.rect(screen,i.getColor(),i.getDim())
-            #pygame.draw.rect(screen,red,i.getDim(),2)
 
         #for i in test_shapes:
             #pygame.draw.polygon(screen,i.getOutline(),i.getHitbox(),3)
