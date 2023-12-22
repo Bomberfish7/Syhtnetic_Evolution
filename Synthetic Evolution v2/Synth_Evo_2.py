@@ -389,7 +389,7 @@ def SAPListEdges(obj_list,axis):
             edges.append(b)
 
     edges.sort(key=Edge.getPos)
-
+##    print(str(i.getParent().UUID))
     return edges
 
 def SAPEdgeVariance(a):
@@ -413,14 +413,14 @@ def SAPCheckEdges(edge_list):
     check=[]
 
     for i in edge_list:
-        if not Foods.get(i.getParent().UUID,False):
+        if Foods.get(i.getParent().UUID,False)==False:
             continue
         if i.getStop():
             if i.getParent() in check:
                 check.remove(i.getParent())
         else:
             SAPBoxCollison(Foods[i.getParent().UUID],check)
-            if not Foods.get(i.getParent().UUID,False) or Foods[i.getParent().UUID]._remove:
+            if Foods.get(i.getParent().UUID,False)==False or Foods[i.getParent().UUID]._remove:
                 continue
             else:
                 check.append(i.getParent())
@@ -438,13 +438,16 @@ def SAPBoxCollison(a,check_list):
 
 def SAPCollide(a,b):
     #Runs what happens when 2 objects collide
-    if(not Foods.get(a.UUID,False) or not Foods.get(b.UUID,False)):
+    if(Foods.get(a.UUID,False)==False or Foods.get(b.UUID,False)==False):
         return
+    print('Collision between ',a.getId(),' ',a.UUID,' and ',b.getId(),' ',b.UUID)
     if type(Foods[a.UUID]) in [FoodCluster,PlantCluster,MushroomCluster]:
         MergeClusters(a.UUID,b.UUID)
+        print('Attempt merge ',b.UUID,' into cluster ',a.UUID)
         return
     elif type(Foods[b.UUID]) in [FoodCluster,PlantCluster,MushroomCluster]:
         MergeClusters(b.UUID,a.UUID)
+        print('Attempt merge ',a.UUID,' into cluster ',b.UUID)
         return
     else:
         MergeClusters(a.UUID,b.UUID)
@@ -479,8 +482,13 @@ def MergeClusters(a_UUID, b_UUID):
     #Merges like foods into clusters
     global Foods
 
+##    print(Foods[a_UUID])
+##    print(Foods[b_UUID])
+##    print([str(i) for i in Foods.items()])
     if(Foods[a_UUID].getId()==Foods[b_UUID].getId() and type(Foods[b_UUID]) in [Food,Plant,Mushroom]):
         a=Foods[a_UUID]
+##        print(Foods[a_UUID])
+##        print([str(i) for i in Foods.items()])
         if not type(Foods[a_UUID]) in [FoodCluster,PlantCluster,MushroomCluster]:
             if type(Foods[a_UUID]) is Food:
                 a=FoodCluster()
@@ -512,6 +520,8 @@ def MergeClusters(a_UUID, b_UUID):
             Foods[a_UUID].Merge(Foods[b_UUID])
             Foods[b_UUID]._remove=True
             Foods.pop(b_UUID)
+##            print(Foods[a_UUID])
+##            print([str(i) for i in Foods.items()])
             return True
     return False
 

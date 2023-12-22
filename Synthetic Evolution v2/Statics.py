@@ -93,8 +93,8 @@ class Object:
         self.UUID=str(uuid.uuid4())
     def __str__(self):
         if(self.immortal):
-            return f'Object:\"{self.obj_id}\"🗹\t [Pos:{self.pos}, Speed:{self.delta}, Size:{self.size}, Health:{self.health}/{self.max_health}, Energy:{self.energy}/{self.max_energy}, Mass:{self.mass}, Friction:{self.friction}]'
-        return f'Object:\"{self.obj_id}\"☐\t [Pos:{self.pos}, Speed:{self.delta}, Size:{self.size}, Health:{self.health}/{self.max_health}, Energy:{self.energy}/{self.max_energy}, Mass:{self.mass}, Friction:{self.friction}]'
+            return f'Object:\"{self.obj_id}\"🗹\t [Pos:{self.pos}, Speed:{self.delta}, Size:{self.size}, Health:{self.health}/{self.max_health}, Energy:{self.energy}/{self.max_energy}, Mass:{self.mass}, Friction:{self.friction}, UUID:{self.UUID}]'
+        return f'Object:\"{self.obj_id}\"☐\t [Pos:{self.pos}, Speed:{self.delta}, Size:{self.size}, Health:{self.health}/{self.max_health}, Energy:{self.energy}/{self.max_energy}, Mass:{self.mass}, Friction:{self.friction}, UUID:{self.UUID}]'
 
     def getPos(self):
         return self.pos
@@ -133,7 +133,7 @@ class Object:
     def getMaxEN(self):
         return self.max_energy*self.size
     def getObjectCopy(self):
-        return [self.pos,self.delta,self.angle,self.shape,self.size,self.hitbox,self.dimensions,self.color,self.outline,self.mass,self.friction,self.obj_id,self.health,self.energy,self.max_health,self.max_energy,self.immortal]
+        return [self.pos,self.delta,self.angle,self.shape,self.size,self.hitbox,self.dimensions,self.color,self.outline,self.mass,self.friction,self.obj_id,self.health,self.energy,self.max_health,self.max_energy,self.immortal,self.UUID]
 
     def setPos(self,pos):
         self.pos=pos
@@ -171,7 +171,7 @@ class Object:
         self.max_health=max_health
     def setMaxEN(self,max_energy):
         self.max_energy-max_energy
-    def setObjectCopy(self,copy):
+    def setObjectCopy(self,copy,copyId=False):
         self.pos=Point(copy[0].getA(),copy[0].getB())
         self.delta=Point(copy[1].getA(),copy[1].getB())
         self.angle=copy[2]
@@ -192,6 +192,8 @@ class Object:
         self.max_health=copy[14]
         self.max_energy=copy[15]
         self.immortal=copy[16]
+        if(copyId):
+            self.UUID=copy[17]
 
     def DeathTest(self):
         if(self.immortal or self.health>0):
