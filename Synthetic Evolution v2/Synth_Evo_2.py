@@ -191,32 +191,38 @@ def FoodInWater():
     global test_terrain
 
     for i in Foods:
-        if(i.getAquatic()==0):
+        if(Foods[i].getAquatic()==0):
             drowning=False
-        elif(i.getAquatic()==1):
+        elif(Foods[i].getAquatic()==1):
             drowning=True
         else:
             drowning=False
         for j in test_terrain:
-            if(i.getAquatic()==0):
-                if(PointInRect(i.getPos(),j.getDim())):
+            if(Foods[i].getAquatic()==0):
+                if(PointInRect(Foods[i].getPos(),j.getDim())):
                     drowning=True
-            elif(i.getAquatic()==1):
-                if(PointInRect(i.getPos(),j.getDim())):
+            elif(Foods[i].getAquatic()==1):
+                if(PointInRect(Foods[i].getPos(),j.getDim())):
                     drowning=False
         if(drowning):
-            i.Drown()
+            Foods[i].Drown()
 #^^  Unfinished  (good collisions are not done yet)^^
 def CheckIfDead():
     #Checks to see if Objects have died
     global Foods
 
-    i=len(Foods)-1
-    while i>=0:
+##    i=len(Foods)-1
+    kill_keys = list()
+    for i in reversed(Foods):
+##    while i>=0:
         if(Foods[i].DeathTest()):
-            wipe = Foods.pop(i)
-            wipe._remove=True
-        i-=1
+##            wipe = Foods[i]
+            Foods[i]._remove=True
+##            Foods.pop(i)
+            kill_keys.append(i)
+##        i-=1
+    for kill in kill_keys:
+        Foods.pop(kill)
 
 def FoodUpdate():
     #Updates various functions for all foods
@@ -230,12 +236,12 @@ def FoodRegen():
     global Foods
 
     for i in Foods:
-        if type(i) in [Plant,PlantCluster]:
-            i.RegenHealth()
-            i.Grow()
-        i.RegenEnergy()
-        i.HurtOnLowEnergy()
-        i.UpdateHitbox()
+        if type(Foods[i]) in [Plant,PlantCluster]:
+            Foods[i].RegenHealth()
+            Foods[i].Grow()
+        Foods[i].RegenEnergy()
+        Foods[i].HurtOnLowEnergy()
+        Foods[i].UpdateHitbox()
 
 def PointInRect(point,rect):
     #Finds if a point is inside a bounding box
@@ -251,10 +257,10 @@ def CollisionHandler():
     global Foods
 
     for i in Foods:
-        if(type(i) in [Plant,PlantCluster]):
-            i.setNbr(0.0)
+        if(type(Foods[i]) in [Plant,PlantCluster]):
+            Foods[i].setNbr(0.0)
     #ToDo1: MergeClusters and old on-collision behavior relies on order and behavior of original collision checking to ensure array bounds and non-skipping.  Breaks with SAP.
-    SweepAndPrune(Foods)
+    SweepAndPrune(Foods.values())
 
 def OldCollision():
     global Foods
@@ -301,12 +307,8 @@ def PolyToLine(poly):
 
     lines=[]
     poly_len=len(poly)
-
-<<<<<<< HEAD
-=======
 ##    print([str(i) for i in poly])
 
->>>>>>> 3ad755b90517d1754de91b72f07bf10fb9d3c407
     for i in range(poly_len):
         lines.append(Line(Point(poly[i][0],poly[i][1]),Point(poly[(i+1)%poly_len][0],poly[(i+1)%poly_len][1])))
 
@@ -411,12 +413,14 @@ def SAPCheckEdges(edge_list):
     check=[]
 
     for i in edge_list:
+        if not Foods.get(i.getParent().UUID,False):
+            continue
         if i.getStop():
             if i.getParent() in check:
                 check.remove(i.getParent())
         else:
-            SAPBoxCollison(i.getParent(),check)
-            if i.getParent()._remove:
+            SAPBoxCollison(Foods[i.getParent().UUID],check)
+            if not Foods.get(i.getParent().UUID,False) or Foods[i.getParent().UUID]._remove:
                 continue
             else:
                 check.append(i.getParent())
@@ -434,38 +438,82 @@ def SAPBoxCollison(a,check_list):
 
 def SAPCollide(a,b):
     #Runs what happens when 2 objects collide
-
-    if type(a) in [FoodCluster,PlantCluster,MushroomCluster]:
-        MergeClusters(a,b)
-    elif type(b) in [FoodCluster,PlantCluster,MushroomCluster]:
-        MergeClusters(b,a)
+    if(not Foods.get(a.UUID,False) or not Foods.get(b.UUID,False)):
+        return
+    if type(Foods[a.UUID]) in [FoodCluster,PlantCluster,MushroomCluster]:
+        MergeClusters(a.UUID,b.UUID)
+        return
+    elif type(Foods[b.UUID]) in [FoodCluster,PlantCluster,MushroomCluster]:
+        MergeClusters(b.UUID,a.UUID)
+        return
     else:
-        MergeClusters(a,b)
+        MergeClusters(a.UUID,b.UUID)
+        return
 
-    if (type(a) in [Plant,PlantCluster] and type(b) in [Plant,PlantCluster] and a._remove==False and b._remove==False):
-        if (a.getId()=="Tree" and b.getId()=="Tree"):
-            a.setNbr(a.getNbr()+b.getMaxEN()/2400)
-            b.setNbr(b.getNbr()+a.getMaxEN()/2400)
+    if (type(Foods[a.UUID]) in [Plant,PlantCluster] and type(Foods[b.UUID]) in [Plant,PlantCluster] and Foods[a.UUID]._remove==False and Foods[b.UUID]._remove==False):
+        if (Foods[a.UUID].getId()=="Tree" and Foods[b.UUID].getId()=="Tree"):
+            Foods[a.UUID].setNbr(Foods[a.UUID].getNbr()+Foods[b.UUID].getMaxEN()/2400)
+            Foods[b.UUID].setNbr(Foods[b.UUID].getNbr()+Foods[a.UUID].getMaxEN()/2400)
         else:
-            if a.getId()=="Tree":
-                a.setNbr(a.getNbr()+b.getMaxEN()/900)
+            if Foods[a.UUID].getId()=="Tree":
+                Foods[a.UUID].setNbr(Foods[a.UUID].getNbr()+Foods[b.UUID].getMaxEN()/900)
             else:
-                a.setNbr(a.getNbr()+b.getMaxEN()/450)
-            if b.getId()=="Tree":
-                b.setNbr(b.getNbr()+a.getMaxEN()/900)
+                Foods[a.UUID].setNbr(Foods[a.UUID].getNbr()+Foods[b.UUID].getMaxEN()/450)
+            if Foods[b.UUID].getId()=="Tree":
+                Foods[b.UUID].setNbr(Foods[b.UUID].getNbr()+Foods[a.UUID].getMaxEN()/900)
             else:
-                b.setNbr(b.getNbr()+a.getMaxEN()/450)
+                Foods[b.UUID].setNbr(Foods[b.UUID].getNbr()+Foods[a.UUID].getMaxEN()/450)
 
 def SAPRemove(obj_list):
+##    global Foods
     #Removes collided with objects
-
+    obj_list = list(obj_list)
     i=len(obj_list)-1
     while i>=0:
-        if obj_list[i]._remove==True:
+        if not Foods.get(obj_list[i].UUID,False) or Foods[obj_list[i].UUID]._remove==True:
             del obj_list[i]
+##            Foods.pop[obj_list[i].UUID]
         i-=1
 
+def MergeClusters(a_UUID, b_UUID):
+    #Merges like foods into clusters
+    global Foods
 
+    if(Foods[a_UUID].getId()==Foods[b_UUID].getId() and type(Foods[b_UUID]) in [Food,Plant,Mushroom]):
+        a=Foods[a_UUID]
+        if not type(Foods[a_UUID]) in [FoodCluster,PlantCluster,MushroomCluster]:
+            if type(Foods[a_UUID]) is Food:
+                a=FoodCluster()
+                a.setClusterFood(Foods[a_UUID])
+                if(Foods[a_UUID].getId()=="Meat"):
+                    a.setShape(shapes[Foods[a_UUID].getId()][1])
+                elif(Foods[a_UUID].getId()=="Bone"):
+                    a.setShape(shapes[Foods[a_UUID].getId()][1])
+                Foods[a_UUID]=a
+            if type(Foods[a_UUID]) is Plant:
+                a=PlantCluster()
+                a.setClusterFood(Foods[a_UUID])
+                if(Foods[a_UUID].getId()=="Grass"):
+                    a.setShape(shapes[Foods[a_UUID].getId()][1])
+                elif(Foods[a_UUID].getId()=="Bush"):
+                    a.setShape(shapes[Foods[a_UUID].getId()][1])
+                elif(Foods[a_UUID].getId()=="Tree"):
+                    a.setShape(shapes[Foods[a_UUID].getId()][1])
+                elif(Foods[a_UUID].getId()=="Kelp"):
+                    a.setShape(shapes[Foods[a_UUID].getId()][1])
+                Foods[a_UUID]=a
+            if type(Foods[a_UUID]) is Mushroom:
+                a=MushroomCluster()
+                a.setClusterFood(Foods[a_UUID])
+                if(Foods[a_UUID].getId()=="Mushroom"):
+                    a.setShape(shapes[Foods[a_UUID].getId()][1])
+                Foods[a_UUID]=a
+        if(Foods[a_UUID].getMaxSZ()<4):
+            Foods[a_UUID].Merge(Foods[b_UUID])
+            Foods[b_UUID]._remove=True
+            Foods.pop(b_UUID)
+            return True
+    return False
 
 
 
@@ -478,79 +526,82 @@ def SAPRemove(obj_list):
 def FoodReproduce():
     #Creates more food from the other foods in the simulation
     global Foods
-
-    for i in Foods:
-        if(i.getSize()>=1):
+    keys = list(Foods.keys())
+    for i in keys:
+        if(Foods[i].getSize()>=1):
             r=random.uniform(0,100)
-            if(i.getId()=="Grass" and i.getEnergy()>=i.getMaxEN()*0.9 and r<=(i.getMaxSZ()*0.1/Globals.fps)*Globals.timescale):
+            if(Foods[i].getId()=="Grass" and Foods[i].getEnergy()>=Foods[i].getMaxEN()*0.9 and r<=(Foods[i].getMaxSZ()*0.1/Globals.fps)*Globals.timescale):
                 size=random.uniform(0.45,0.55)
-                radius=random.uniform(16,48)*i.getSize()
+                radius=random.uniform(16,48)*Foods[i].getSize()
                 direction=random.uniform(0,360)
-                pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
+                pos=Point(Foods[i].getPos().getA()+radius*math.cos(math.radians(direction)),Foods[i].getPos().getB()+radius*math.sin(math.radians(direction)))
                 spawn=True
                 for j in Foods:
-                    if(PointInRect(Point(pos.getA(),pos.getB()-6),j.getDim())):
+                    if(PointInRect(Point(pos.getA(),pos.getB()-6),Foods[j].getDim())):
                         grass_r=random.uniform(0,100)
                         if(grass_r>=25):
                             spawn=False
                 if(spawn):
-                    Foods.append(CreateFood(pos,0,size,size*i.getMaxEN()*0.2,i))
-                    i.setEnergy(i.getEnergy()*(1-0.5*(1+(size-0.5))))
-            if(i.getId()=="Bush" and i.getEnergy()>=i.getMaxEN()*0.9 and r<=(i.getMaxSZ()*0.05/Globals.fps)*Globals.timescale):
+                    newfood = CreateFood(pos,0,size,size*Foods[i].getMaxEN()*0.2,Foods[i])
+                    Foods[newfood.UUID] = newfood
+                    Foods[i].setEnergy(Foods[i].getEnergy()*(1-0.5*(1+(size-0.5))))
+            if(Foods[i].getId()=="Bush" and Foods[i].getEnergy()>=Foods[i].getMaxEN()*0.9 and r<=(Foods[i].getMaxSZ()*0.05/Globals.fps)*Globals.timescale):
                 size=random.uniform(0.15,0.25)
-                radius=random.uniform(32,80)*i.getSize()
+                radius=random.uniform(32,80)*Foods[i].getSize()
                 direction=random.uniform(0,360)
-                pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
+                pos=Point(Foods[i].getPos().getA()+radius*math.cos(math.radians(direction)),Foods[i].getPos().getB()+radius*math.sin(math.radians(direction)))
 
-                Foods.append(CreateFood(pos,0,size,size*i.getMaxEN()*0.1,i))
-                i.setEnergy(i.getEnergy()*(1-0.6*(1+(size-0.2))))
-            if(i.getId()=="Tree" and i.getEnergy()>=i.getMaxEN()*0.975 and r<=(i.getMaxSZ()*0.15/Globals.fps)*Globals.timescale):
-                f=random.randrange(1,round(5*(math.pow(i.getSize(),0.75))))
+                newfood = CreateFood(pos,0,size,size*Foods[i].getMaxEN()*0.1,Foods[i])
+                Foods[newfood.UUID] = newfood
+                Foods[i].setEnergy(Foods[i].getEnergy()*(1-0.6*(1+(size-0.2))))
+            if(Foods[i].getId()=="Tree" and Foods[i].getEnergy()>=Foods[i].getMaxEN()*0.975 and r<=(Foods[i].getMaxSZ()*0.15/Globals.fps)*Globals.timescale):
+                f=random.randrange(1,round(5*(math.pow(Foods[i].getSize(),0.75))))
                 for j in range(f):
                     size=random.uniform(0.90,1.10)
-                    radius=random.uniform(32,80)*(math.pow(3*i.getSize(),(1/3)))
+                    radius=random.uniform(32,80)*(math.pow(3*Foods[i].getSize(),(1/3)))
                     direction=random.uniform(0,360)
-                    pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
+                    pos=Point(Foods[i].getPos().getA()+radius*math.cos(math.radians(direction)),Foods[i].getPos().getB()+radius*math.sin(math.radians(direction)))
 
-                    new_fruit=CreateFood(pos,0,size,size*(i.getMaxEN()/i.getMaxSZ())*1,Base_Foods[4])
+                    new_fruit=CreateFood(pos,0,size,size*(Foods[i].getMaxEN()/Foods[i].getMaxSZ())*1,Base_Foods[4])
                     new_seed=Plant()
-                    new_seed.setFoodCopy(i.getFoodCopy())
+                    new_seed.setFoodCopy(Foods[i].getFoodCopy())
                     new_fruit.setSeed(new_seed)
-                    Foods.append(new_fruit)
-                    i.setEnergy(i.getEnergy() - (i.getEnergy()/i.getMaxSZ())*(0+0.1*(1+(size-1.0))))#FIXME fruit energy cost/starting value fuckery here up
-            if(i.getId()=="Kelp" and i.getEnergy()>=i.getMaxEN()*0.75 and r<=(i.getMaxSZ()*0.15/Globals.fps)*Globals.timescale):
+                    Foods[new_fruit.UUID]=new_fruit
+                    Foods[i].setEnergy(Foods[i].getEnergy() - (Foods[i].getEnergy()/Foods[i].getMaxSZ())*(0+0.1*(1+(size-1.0))))#FIXME fruit energy cost/starting value fuckery here up
+            if(Foods[i].getId()=="Kelp" and Foods[i].getEnergy()>=Foods[i].getMaxEN()*0.75 and r<=(Foods[i].getMaxSZ()*0.15/Globals.fps)*Globals.timescale):
                 size=random.uniform(0.05,0.15)
-                radius=random.uniform(16,32)*i.getSize()
+                radius=random.uniform(16,32)*Foods[i].getSize()
                 direction=random.uniform(0,360)
-                pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
+                pos=Point(Foods[i].getPos().getA()+radius*math.cos(math.radians(direction)),Foods[i].getPos().getB()+radius*math.sin(math.radians(direction)))
                 spawn=True
                 for j in Foods:
-                    if(PointInRect(Point(pos.getA(),pos.getB()-6),j.getDim())):
+                    if(PointInRect(Point(pos.getA(),pos.getB()-6),Foods[j].getDim())):
                         kelp_r=random.uniform(0,100)
                         if(kelp_r>=25):
                             spawn=False
                 if(spawn):
-                    Foods.append(CreateFood(pos,0,size,size*i.getMaxEN()*0.1,i))
-                    i.setEnergy(i.getEnergy()*(1-0.25*(1+(size-0.1))))
-            if(i.getId()=="Fruit" and i.getEnergy()<=i.getMaxEN()*0.1 and r<=(i.getMaxSZ()*4.0/Globals.fps)*Globals.timescale):
+                    newfood = CreateFood(pos,0,size,size*Foods[i].getMaxEN()*0.1,Foods[i])
+                    Foods[newfood.UUID] = newfood
+                    Foods[i].setEnergy(Foods[i].getEnergy()*(1-0.25*(1+(size-0.1))))
+            if(Foods[i].getId()=="Fruit" and Foods[i].getEnergy()<=Foods[i].getMaxEN()*0.1 and r<=(Foods[i].getMaxSZ()*4.0/Globals.fps)*Globals.timescale):
                 size=random.uniform(0.05,0.15)
-                radius=random.uniform(0,32)*i.getSize()
+                radius=random.uniform(0,32)*Foods[i].getSize()
                 direction=random.uniform(0,360)
-                pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
-
-                Foods.append(CreateFood(pos,0,size,i.getEnergy()+40*size,i.getSeed()))
-                i.setHealth(0)
-            if(i.getId()=="Mushroom"):
+                pos=Point(Foods[i].getPos().getA()+radius*math.cos(math.radians(direction)),Foods[i].getPos().getB()+radius*math.sin(math.radians(direction)))
+                newfood = CreateFood(pos,0,size,Foods[i].getEnergy()+40*size,Foods[i].getSeed())
+                Foods[newfood.UUID] = newfood
+                Foods[i].setHealth(0)
+            if(Foods[i].getId()=="Mushroom"):
                 pass
-            if(i.getId()=="Meat"):
+            if(Foods[i].getId()=="Meat"):
                 pass
-            if(i.getId()=="Bone"):
+            if(Foods[i].getId()=="Bone"):
                 pass
-            if(i.getId()=="Bug"):
+            if(Foods[i].getId()=="Bug"):
                 pass
-            if(i.getId()=="Fish"):
+            if(Foods[i].getId()=="Fish"):
                 pass
-            if(i.getId()=="Egg"):
+            if(Foods[i].getId()=="Egg"):
                 pass
 
 
@@ -616,7 +667,7 @@ screen.blit(dayscreen,(0,0))
 
 
 Terrain=[]
-Foods=[]
+Foods=dict()
 Creatures=[]
 Edges=[]
 Base_Terrain=[]
@@ -654,7 +705,8 @@ try:
             if(event.type==pygame.MOUSEBUTTONUP):
                 if(event.button==1):
                     #Left Click
-                    Foods.append(CreateBaseFood(Point(pygame.mouse.get_pos()[0],pygame.mouse.get_pos()[1]),0,1,Globals.devtest_foodspawn_type))
+                    newfood = CreateBaseFood(Point(pygame.mouse.get_pos()[0],pygame.mouse.get_pos()[1]),0,1,Globals.devtest_foodspawn_type)
+                    Foods[newfood.UUID] = newfood
                 if(event.button==2):
                     #Middle Click
                     pass
@@ -717,7 +769,8 @@ try:
         #for i in test_shapes:
             #pygame.draw.polygon(screen,i.getOutline(),i.getHitbox(),3)
 
-        for i in Foods:
+        for key in Foods:
+            i = Foods[key]
             if(Globals.devtest_mode):
                 size_text=font0.render(str("%.2f" % round(i.getSize(),2)),False,blue)
                 size_text_rect=size_text.get_rect()

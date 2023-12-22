@@ -10,6 +10,7 @@
 import pygame
 import math
 import numpy as np
+import uuid
 
 
 class Point:
@@ -89,6 +90,7 @@ class Object:
         self.max_energy=max_energy
         self.immortal=immortal
         self._remove=False
+        self.UUID=str(uuid.uuid4())
     def __str__(self):
         if(self.immortal):
             return f'Object:\"{self.obj_id}\"🗹\t [Pos:{self.pos}, Speed:{self.delta}, Size:{self.size}, Health:{self.health}/{self.max_health}, Energy:{self.energy}/{self.max_energy}, Mass:{self.mass}, Friction:{self.friction}]'
