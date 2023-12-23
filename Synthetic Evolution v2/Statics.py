@@ -171,7 +171,7 @@ class Object:
         self.max_health=max_health
     def setMaxEN(self,max_energy):
         self.max_energy-max_energy
-    def setObjectCopy(self,copy,copyId=False):
+    def setObjectCopy(self,copy,copyUUID=False):
         self.pos=Point(copy[0].getA(),copy[0].getB())
         self.delta=Point(copy[1].getA(),copy[1].getB())
         self.angle=copy[2]
@@ -192,7 +192,7 @@ class Object:
         self.max_health=copy[14]
         self.max_energy=copy[15]
         self.immortal=copy[16]
-        if(copyId):
+        if(copyUUID):
             self.UUID=copy[17]
 
     def DeathTest(self):
@@ -256,7 +256,7 @@ class Edge:
         self.stop=stop
         self.parent=parent
     def __str__(self):
-        return f'{self.parent.getId()}: {self.pos}, {self.stop}'
+        return f'"{self.parent.getId()}", {self.parent.UUID}: {self.pos}, {self.stop}'
 
     def getPos(self):
         return self.pos
@@ -264,9 +264,9 @@ class Edge:
         return self.stop
     def getParent(self):
         return self.parent
-
     def getEdgeCopy(self):
         return [self.pos,self.stop,self.parent]
+
     def setPos(self,pos):
         self.pos=pos
     def setStop(self,stop):

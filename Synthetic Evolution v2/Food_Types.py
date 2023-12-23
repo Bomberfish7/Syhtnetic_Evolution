@@ -58,8 +58,8 @@ class Food(Object):
         self.poison=poison
     def setAquatic(self,aquatic):
         self.aquatic=aquatic
-    def setFoodCopy(self,copy,copyId=False):
-        self.setObjectCopy(copy[0],copyId)
+    def setFoodCopy(self,copy,copyUUID=False):
+        self.setObjectCopy(copy[0],copyUUID)
         self.energy_regen=copy[1]
         self.age=copy[2]
         self.poison=copy[3]
@@ -204,12 +204,12 @@ class FoodCluster(Food):
         self.max_size=copy[1]
         self.setSeed(self.getFoodCopy())
     def setClusterFood(self,food):
-        self.setFoodCopy(food.getFoodCopy(),copyId=True)
+        self.setFoodCopy(food.getFoodCopy(),copyUUID=True)
         self.max_size=1
 
     def Merge(self,food):
         self.max_size+=1
-        self.pos=Point((self.pos.getA()+food.getPos().getA())*(1-self.getSize()/(self.getSize()+food.getSize())),(self.pos.getB()+food.getPos().getB())*(1-self.getSize()/(self.getSize()+food.getSize())))
+        self.pos=Point((self.pos.getA()+food.getPos().getA())/2,(self.pos.getB()+food.getPos().getB())/2)
         self.size+=food.getSize()
         self.max_energy+=food.getMaxEN()
         self.max_health+=food.getMaxHP()
@@ -234,12 +234,12 @@ class PlantCluster(Plant):
         self.max_size=copy[1]
         self.setSeed(self.getFoodCopy())
     def setClusterFood(self,food):
-        self.setFoodCopy(food.getFoodCopy(),copyId=True)
+        self.setFoodCopy(food.getFoodCopy(),copyUUID=True)
         self.max_size=1
 
     def Merge(self,food):
         self.max_size+=1
-        self.pos=Point((self.pos.getA()+food.getPos().getA())*(1-self.getSize()/(self.getSize()+food.getSize())),(self.pos.getB()+food.getPos().getB())*(1-self.getSize()/(self.getSize()+food.getSize())))
+        self.pos=Point((self.pos.getA()+food.getPos().getA())/2,(self.pos.getB()+food.getPos().getB())/2)
         self.size+=food.getSize()
         self.max_energy+=food.getMaxEN()
         self.max_health+=food.getMaxHP()
@@ -272,12 +272,12 @@ class MushroomCluster(Mushroom):
         self.max_size=copy[1]
         self.setSeed(self.getFoodCopy())
     def setClusterFood(self,food):
-        self.setFoodCopy(food.getFoodCopy(),copyId=True)
+        self.setFoodCopy(food.getFoodCopy(),copyUUID=True)
         self.max_size=1
 
     def Merge(self,food):
         self.max_size+=1
-        self.pos=Point((self.pos.getA()+food.getPos().getA())*(1-self.getSize()/(self.getSize()+food.getSize())),(self.pos.getB()+food.getPos().getB())*(1-self.getSize()/(self.getSize()+food.getSize())))
+        self.pos=Point((self.pos.getA()+food.getPos().getA())/2,(self.pos.getB()+food.getPos().getB())/2)
         self.size+=food.getSize()
         self.max_energy+=food.getMaxEN()
         self.max_health+=food.getMaxHP()
