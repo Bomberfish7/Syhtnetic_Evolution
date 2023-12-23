@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Name:        Synthetic Evolution 2.2.1
+# Name:        Synthetic Evolution 2.2.2
 # Purpose:
 #
 # Author:      The Throngler & co.
@@ -384,7 +384,7 @@ def SAPCollide(a,b):
     #Runs what happens when 2 objects collide
     global Entities
 
-    if(Entities.get(a,False)==False or Entities.get(b,False)==False):
+    if (Entities.get(a,False)==False or Entities.get(b,False)==False) or (Entities[a]._remove==True or Entities[b]._remove==True):
         return
     if type(Entities[a]) in [Food,Plant,Mushroom,FoodCluster,PlantCluster,MushroomCluster] and type(Entities[b]) in [Food,Plant,Mushroom,FoodCluster,PlantCluster,MushroomCluster]:
 
@@ -608,7 +608,7 @@ pygame.init()
 
 #Create Screen
 screen=pygame.display.set_mode((s_width,s_height))
-pygame.display.set_caption("Synth_Evo 2.2.1")
+pygame.display.set_caption("Synth_Evo 2.2.2")
 dayscreen = pygame.Surface((s_width,s_height))
 dayscreen.set_alpha(0)
 dayscreen.fill(c_night)
