@@ -12,7 +12,6 @@ import math
 import numpy as np
 import uuid
 
-
 class Point:
     #A simple 2D point in space. Can also act as a 2D Vector if needed
     def __init__(self,a=0,b=0):
@@ -60,6 +59,29 @@ class Line:
         self.a=line[0].getPoint()
         self.b=line[1].getPoint()
 
+class Circle:
+    #A simple 2D circle
+    def __init__(self,pos=Point(),radius=1):
+        self.pos=pos
+        self.radius=radius
+    def __str__(self):
+        return f'[{self.pos} , r={self.radius}]'
+
+    def getPos(self):
+        return self.pos
+    def getRadius(self):
+        return self.radius
+    def getCircle(self):
+        return [self.pos,self.radius]
+
+    def setPos(self,pos):
+        self.pos=pos
+    def setRadius(self,radius):
+        self.radius=radius
+    def setCircle(self,circle):
+        self.pos=circle[0]
+        self.radius=circle[1]
+
 class Object:
     #Base object type for anything interactable in the simulation
     def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,immortal=False):
@@ -77,7 +99,9 @@ class Object:
         self.shape=shape
         self.size=size
         self.hitbox=None
+        self.visuals=None
         self.dimensions=pygame.Rect(0,0,0,0)
+        self.vis_dimensions=pygame.Rect(0,0,0,0)
         self.UpdateHitbox()
         self.color=color
         self.outline=outline
@@ -112,6 +136,10 @@ class Object:
         return self.shape[index]
     def getHitbox(self):
         return self.hitbox
+    def getVisuals(self):
+        return self.visuals
+    def getVisDim(self):
+        return self.vis_dimensions
     def getColor(self):
         return self.color
     def getOutline(self):
@@ -149,8 +177,6 @@ class Object:
         self.shape=shape
     def setShapePoint(self,point,index):
         self.shape[index]=point
-    def setHitbox(self,hitbox):
-        self.hitbox=self.GenerateHitbox(hitbox)
     def setColor(self,color):
         self.color=color
     def setOutline(self,outline):
@@ -200,13 +226,17 @@ class Object:
             return False
         return True
     def UpdateHitbox(self):
+        global camera
         a=[]
+        b=[]
         rad=math.radians(self.angle)
         cosang,sinang=math.cos(rad),math.sin(rad)
         for i in range(len(self.shape)):
             x,y=self.shape[i].getA(),self.shape[i].getB()
             a.append([(x*cosang+y*sinang)*self.size+self.pos.getA(),(-x*sinang+y*cosang)*self.size+self.pos.getB()])
+            b.append([(x*cosang+y*sinang)*self.size+self.pos.getA()+camera.getA(),(-x*sinang+y*cosang)*self.size+self.pos.getB()+camera.getB()])
         self.hitbox=a
+        self.visuals=b
         self.UpdateDimensions()
     def UpdateDimensions(self):
         min_x=self.hitbox[0][0]
@@ -227,6 +257,11 @@ class Object:
         self.dimensions.y=min_y
         self.dimensions.w=max_x-min_x
         self.dimensions.h=max_y-min_y
+
+        self.vis_dimensions.x=min_x+camera.getA()
+        self.vis_dimensions.y=min_y+camera.getB()
+        self.vis_dimensions.w=max_x-min_x
+        self.vis_dimensions.h=max_y-min_y
 
 class Tile(Object):
     #Any terrain object
@@ -291,7 +326,7 @@ tile_offset=tile_size/2
 running=True
 clock=pygame.time.Clock()
 fps=60
-
+camera=Point(0,0)
 
 #Colors/Fonts
 ##Basic default colors
@@ -327,3 +362,4 @@ c_water=(75,165,240)
 font0=pygame.font.Font('freesansbold.ttf',16)
 font1=pygame.font.Font('freesansbold.ttf',8)
 font2=pygame.font.Font('freesansbold.ttf',5)
+font3=pygame.font.Font('freesansbold.ttf',32)
