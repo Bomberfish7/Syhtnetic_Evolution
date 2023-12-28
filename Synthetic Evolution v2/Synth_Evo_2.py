@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Name:        Synthetic Evolution 2.2.3
+# Name:        Synthetic Evolution 2.2.4
 # Purpose:
 #
 # Author:      The Throngler & co.
@@ -22,7 +22,6 @@ from Food_Types import *
 
 
 #TO DO:
-#   Make Move method for Prey Foods
 #   Make Method to scale foods natural color to Poison or Medicinal color based on poison value (Purple(-) -> Base Color(0) -> Blue(+))
 
 
@@ -48,6 +47,9 @@ def UpdateTime():
         camera.setA(camera.getA()+50/Globals.fps)
     if Globals.cam_move_right:
         camera.setA(camera.getA()-50/Globals.fps)
+    if Globals.cam_drag:
+        mouse_rel=pygame.mouse.get_rel()
+        camera.setPoint([camera.getA()+mouse_rel[0]/zoom.getA(),camera.getB()+mouse_rel[1]/zoom.getB()])
 
     TileUpdate()
     FoodUpdate()
@@ -218,10 +220,7 @@ def FoodInWater():
             elif(Entities[i].getAquatic()==1):
                 if(PointInRect(Entities[i].getPos(),j.getDim())):
                     drowning=False
-                else:
-                    if type(Entities[i]) is PreyFood:
-                        Entities[i].setDx(Entities[i].getDx()*-1)
-                        Entities[i].setDy(Entities[i].getDy()*-1)
+
         if(drowning):
             Entities[i].Drown()
 
@@ -243,6 +242,10 @@ def FoodRegen():
             Entities[i].Grow()
         if type(Entities[i]) is PreyFood:
             FoodMove(i)
+            if Entities[i].getMemoryLen()>0:
+                if random.uniform(0,100)<=(0.1/Globals.fps)*Globals.timescale:
+                    Entities[i].removeMemory()
+
         Entities[i].RegenEnergy()
         Entities[i].HurtOnLowEnergy()
         Entities[i].UpdateHitbox()
@@ -441,6 +444,7 @@ def SAPCollide(a,b):
             Entities[a].setNbr(Entities[a].getNbr()+Entities[b].getMaxEN()/(1350/(Entities[a].getNbrMul()*-1)))
             Entities[b].setNbr(Entities[b].getNbr()+Entities[a].getMaxEN()/(1350/Entities[a].getNbrMul()))
         elif(type(Entities[a]) in [PreyFood] and type(Entities[b]) in [Food,FoodCluster,Fruit,Plant,PlantCluster,Mushroom,MushroomCluster]):
+            Entities[a].addMemory(Point(Entities[b].getPos().getA(),Entities[b].getPos().getB()))
             if Entities[a].getEatT()<=0:
                 r=random.uniform(0.15,0.25)
                 r=Entities[a].getMaxEN()*r
@@ -450,8 +454,10 @@ def SAPCollide(a,b):
                     r=Entities[b].getEnergy()
                 Entities[a].setEnergy(Entities[a].getEnergy()+r)
                 Entities[a].setEatT(1.5)
+                Entities[a].setMoveT(Entities[a].getMoveT()*0.25)
                 Entities[b].setEnergy(Entities[b].getEnergy()-r)
         elif(type(Entities[a]) in [Food,FoodCluster,Fruit,Plant,PlantCluster,Mushroom,MushroomCluster] and type(Entities[b]) in [PreyFood]):
+            Entities[b].addMemory(Point(Entities[a].getPos().getA(),Entities[a].getPos().getB()))
             if Entities[b].getEatT()<=0:
                 r=random.uniform(0.15,0.25)
                 r=Entities[b].getMaxEN()*r
@@ -461,7 +467,9 @@ def SAPCollide(a,b):
                     r=Entities[a].getEnergy()
                 Entities[b].setEnergy(Entities[b].getEnergy()+r)
                 Entities[b].setEatT(1.5)
+                Entities[b].setMoveT(Entities[b].getMoveT()*0.25)
                 Entities[a].setEnergy(Entities[a].getEnergy()-r)
+
 
 def ClearRemoves():
     #Deletes objects from list tagged with _remove
@@ -565,7 +573,7 @@ def FoodReproduce():
                     new_fruit.setSeed(new_seed)
                     Entities[new_fruit.UUID]=new_fruit
                     Foods.append(new_fruit.UUID)
-                    i.setEnergy(i.getEnergy()-(i.getEnergy()/i.getMaxSZ())*(0+0.1*(1+(size-1.0))))#FIXME fruit energy cost/starting value fuckery here up
+                    i.setEnergy(i.getEnergy()-(i.getEnergy()/i.getMaxSZ())*(0+0.1*(1+(size-1.0))))
             elif(i.getId()=="Kelp" and i.getEnergy()>=i.getMaxEN()*0.75 and r<=(i.getMaxSZ()*0.15/Globals.fps)*Globals.timescale):
                 size=random.uniform(0.05,0.15)
                 radius=random.uniform(16,32)*i.getSize()
@@ -597,18 +605,35 @@ def FoodReproduce():
                 radius=random.uniform(16,100)*i.getSize()
                 direction=random.uniform(0,360)
                 pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
+
                 newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.1,i)
                 Entities[newfood.UUID]=newfood
                 Foods.append(newfood.UUID)
-                i.setEnergy(i.getEnergy()*(1-0.25*(1+(size-0.1))))
+                i.setEnergy(i.getEnergy()*(1-0.40*(1+(size-0.1))))
             elif(i.getId()=="Meat"):
                 pass
             elif(i.getId()=="Bone"):
                 pass
-            elif(i.getId()=="Bug"):
-                pass
-            elif(i.getId()=="Fish"):
-                pass
+            elif(i.getId()=="Bug" and i.getEnergy()>=i.getMaxEN()*0.35 and r<=(i.getMaxSZ()*0.2/Globals.fps)*Globals.timescale):
+                f=random.randrange(2,round(7*(math.pow(i.getSize(),0.75))))
+                for j in range(f):
+                    size=random.uniform(0.2,0.3)
+                    pos=Point(i.getPos().getA(),i.getPos().getB())
+
+                    newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.85,i)
+                    Entities[newfood.UUID]=newfood
+                    Foods.append(newfood.UUID)
+                i.setEnergy(i.getEnergy()*(1-0.25*(1+(size-0.1))))
+            elif(i.getId()=="Fish" and i.getEnergy()>=i.getMaxEN()*0.8 and r<=(i.getMaxSZ()*0.1/Globals.fps)*Globals.timescale):
+                f=random.randrange(1,round(4*(math.pow(i.getSize(),0.75))))
+                for j in range(f):
+                    size=random.uniform(0.2,0.3)
+                    pos=Point(i.getPos().getA(),i.getPos().getB())
+
+                    newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.35,i)
+                    Entities[newfood.UUID]=newfood
+                    Foods.append(newfood.UUID)
+                i.setEnergy(i.getEnergy()*(1-0.45*(1+(size-0.25))))
             elif(i.getId()=="Egg"):
                 pass
 
@@ -616,14 +641,28 @@ def FoodMove(key):
     #Moves prey foods through the world
 
     global Entities
+    global test_terrain
+
+    target=None
 
     if Entities[key].getMoveT()<=0:
-        radius=random.uniform(0,20)
-        direction=random.uniform(0,360)
-        pos=Point(radius*math.cos(math.radians(direction)),radius*math.sin(math.radians(direction)))
-        Entities[key].setMoveT(random.uniform(0.5,5))
-        Entities[key].Move(pos)
-        return
+        if Entities[key].getMemoryLen()>0 and random.uniform(0,100)<=70:
+            target=Entities[key].getRandMemory()
+            target.setPoint([target.getA()+random.uniform(-7,7),target.getB()+random.uniform(-7,7)])
+        else:
+            target=Point(Entities[key].getPos().getA()+random.uniform(-64,64),Entities[key].getPos().getB()+random.uniform(-64,64))
+        if Entities[key].getAquatic()==1:
+            t=False
+            for i in test_terrain:
+                if PointInRect(target,i.getDim()):
+                    t=True
+            if not t:
+                target=Point(Entities[key].getPos().getA(),Entities[key].getPos().getB())
+        Entities[key].setTarget(target)
+        Entities[key].setMoveT(random.uniform(5,15))
+
+
+
 
     Entities[key].Move()
 
@@ -678,7 +717,7 @@ pygame.init()
 
 #Create Screen
 screen=pygame.display.set_mode((s_width,s_height))
-pygame.display.set_caption("Synth_Evo 2.2.3")
+pygame.display.set_caption("Synth_Evo 2.2.4")
 dayscreen = pygame.Surface((s_width,s_height))
 dayscreen.set_alpha(0)
 dayscreen.fill(c_night)
@@ -724,15 +763,14 @@ try:
                 sys.exit()
                 exit()
 
-            if(event.type==pygame.MOUSEBUTTONUP):
+            if(event.type==pygame.MOUSEBUTTONDOWN):
                 if(event.button==1):
                     #Left Click
-                    newfood = CreateBaseFood(Point(pygame.mouse.get_pos()[0]-camera.getA(),pygame.mouse.get_pos()[1]-camera.getB()),0,1,Globals.devtest_foodspawn_type)
-                    Entities[newfood.UUID] = newfood
-                    Foods.append(newfood.UUID)
+                    pass
                 if(event.button==2):
                     #Middle Click
-                    pass
+                    Globals.cam_drag=True
+                    pygame.mouse.get_rel()
                 if(event.button==3):
                     #Right Click
                     pass
@@ -740,6 +778,27 @@ try:
                     pass
                 if(event.button==5):
                     pass
+
+            if(event.type==pygame.MOUSEBUTTONUP):
+                if(event.button==1):
+                    #Left Click
+                    newfood=CreateBaseFood(Point((pygame.mouse.get_pos()[0]-s_width/2)/zoom.getA()-camera.getA(),(pygame.mouse.get_pos()[1]-s_height/2)/zoom.getB()-camera.getB()),0,1,Globals.devtest_foodspawn_type)
+                    Entities[newfood.UUID]=newfood
+                    Foods.append(newfood.UUID)
+                if(event.button==2):
+                    #Middle Click
+                    Globals.cam_drag=False
+                if(event.button==3):
+                    #Right Click
+                    pass
+                if(event.button==4):
+                    pass
+                if(event.button==5):
+                    pass
+
+            if(event.type==pygame.MOUSEWHEEL):
+                zoom.setPoint([np.clip(event.y/5+zoom.getA(),0.4,10),np.clip(event.y/5+zoom.getB(),0.4,10)])
+
 
             if(event.type==pygame.KEYDOWN):
                 if(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
@@ -819,11 +878,11 @@ try:
                 health_text_rect=health_text.get_rect()
                 energy_text=font0.render(str("%.2f" % round(i.getEnergy(),2))+"/"+str("%.2f" % round(i.getMaxEN(),2)),False,green)
                 energy_text_rect=energy_text.get_rect()
-                size_text_rect.center=(i.getDim().midtop[0]+camera.getA(),i.getDim().midtop[1]-45+camera.getB())
+                size_text_rect.center=((i.getDim().midtop[0]+camera.getA())*zoom.getA()+s_width/2,(i.getDim().midtop[1]+camera.getB())*zoom.getB()+s_height/2-45)
                 screen.blit(size_text,size_text_rect)
-                health_text_rect.center=(i.getDim().midtop[0]+camera.getA(),i.getDim().midtop[1]-27+camera.getB())
+                health_text_rect.center=((i.getDim().midtop[0]+camera.getA())*zoom.getA()+s_width/2,(i.getDim().midtop[1]+camera.getB())*zoom.getB()+s_height/2-27)
                 screen.blit(health_text,health_text_rect)
-                energy_text_rect.center=(i.getDim().midtop[0]+camera.getA(),i.getDim().midtop[1]-9+camera.getB())
+                energy_text_rect.center=((i.getDim().midtop[0]+camera.getA())*zoom.getA()+s_width/2,(i.getDim().midtop[1]+camera.getB())*zoom.getB()+s_height/2-9)
                 screen.blit(energy_text,energy_text_rect)
             pygame.draw.polygon(screen,i.getOutline(),i.getVisuals(),3)
 
@@ -831,8 +890,6 @@ try:
         dayscreen.set_alpha((-2.55*Globals.light+255)*np.clip((135-Globals.timescale)/135,0.35,1))
         dayscreen.fill(c_night)
         screen.blit(dayscreen,(0,0))
-
-
 
 
 

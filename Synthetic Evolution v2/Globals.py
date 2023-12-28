@@ -13,7 +13,6 @@ import numpy as np
 from Statics import *
 from Food_Types import Food,Plant,Fruit,Mushroom,PreyFood,Egg,FoodCluster,PlantCluster,MushroomCluster
 
-zoom=1
 scale=1
 temperature=75
 timescale=1
@@ -85,6 +84,7 @@ Base_Foods.append(base_Egg)
 devtest_foodspawn_type=0
 devtest_mode=False
 devtest_timeincrease=False
+cam_drag=False
 cam_move_up=False
 cam_move_down=False
 cam_move_left=False

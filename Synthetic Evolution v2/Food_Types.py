@@ -10,6 +10,7 @@
 import pygame
 import math
 import numpy as np
+import random
 import Globals
 from Statics import *
 
@@ -191,6 +192,8 @@ class PreyFood(Food):
         self.dy=0
         self.move_timer=0
         self.eat_timer=0
+        self.memory=list()
+        self.target=Point(0,0)
     def __str__(self):
         return f'PreyFood:\"{self.obj_id}\"\t [Health:{self.health}, Energy:{self.energy}, Regen:{self.energy_regen}, Age:{self.age}, Poison:{self.poison}, Aquatic:{self.aquatic}, UUID:{self.UUID}]'
 
@@ -202,6 +205,21 @@ class PreyFood(Food):
         return self.dx
     def getDy(self):
         return self.dy
+    def getTarget(self):
+        return self.target
+    def getMemory(self):
+        return self.memory
+    def getMemoryLen(self):
+        return len(self.memory)
+    def getIndMemory(self,i):
+        if i<0 or i>=len(self.memory):
+            return None
+        return self.memory[i]
+    def getRandMemory(self):
+        if(len(self.memory)==0):
+            return None
+        ran = random.randint(0,len(self.memory)-1)
+        return self.memory[ran]
 
     def setMoveT(self,move_timer):
         self.move_timer=move_timer
@@ -211,6 +229,23 @@ class PreyFood(Food):
         self.dx=dx
     def setDy(self,dy):
         self.dy=dy
+    def setTarget(self,target):
+        self.target.setPoint([target.getA(),target.getB()])
+    def addMemory(self,pos):
+        for i in self.memory:
+            if abs(i.getA()-pos.getA())<=7 and abs(i.getB()-pos.getB())<=7:
+                self.memory.remove(i)
+        self.memory.append(pos)
+        if(len(self.memory)>10):
+            del self.memory[0]
+    def removeMemory(self,i=None):
+        if i is None:
+            i=random.randint(0,len(self.memory))
+        if i>=len(self.memory):
+            return
+        del self.memory[i]
+    def clearMemory(self):
+        self.memory.clear()
 
     def Grow(self):
         if(self.energy>=self.max_energy*self.size*0.75 and self.size<1.5):
@@ -229,15 +264,22 @@ class PreyFood(Food):
                 self.energy=self.max_energy*self.size
             self.health=self.max_health*self.size
 
-    def Move(self,vect=None):
-        if not(vect is None):
-            self.dx=vect.getA()
-            self.dy=vect.getB()
-        self.pos.setA(self.pos.getA()+self.dx/Globals.fps*Globals.timescale)
-        self.pos.setB(self.pos.getB()+self.dy/Globals.fps*Globals.timescale)
+    def Move(self):
+        tdx=self.target.getA()-self.pos.getA()
+        tdy=self.target.getB()-self.pos.getB()
+        magnitude=math.sqrt(tdx**2+tdy**2)
+        if magnitude<=0.05:
+            self.move_timer*=0.75
+        if magnitude>20:
+            self.dx=(tdx/magnitude)*20/Globals.fps*Globals.timescale
+            self.dy=(tdy/magnitude)*20/Globals.fps*Globals.timescale
+        else:
+            self.dx=tdx/Globals.fps*Globals.timescale
+            self.dy=tdy/Globals.fps*Globals.timescale
+        self.pos.setPoint([self.pos.getA()+self.dx,self.pos.getB()+self.dy])
         self.move_timer-=1/Globals.fps*Globals.timescale
         self.eat_timer-=1/Globals.fps*Globals.timescale
-        self.energy-=(0.01*math.sqrt(math.pow(self.dx,2)+math.pow(self.dy,2)))/Globals.fps*Globals.timescale
+        self.energy-=(0.075+(0.01*math.sqrt(self.dx**2+self.dy**2)))/Globals.fps*Globals.timescale
 
 
 

@@ -20,7 +20,6 @@ class Point:
     def __str__(self):
         return f'({self.a}, {self.b})'
 
-
     def getA(self):
         return self.a
     def getB(self):
@@ -227,6 +226,7 @@ class Object:
         return True
     def UpdateHitbox(self):
         global camera
+        global zoom
         a=[]
         b=[]
         rad=math.radians(self.angle)
@@ -234,11 +234,13 @@ class Object:
         for i in range(len(self.shape)):
             x,y=self.shape[i].getA(),self.shape[i].getB()
             a.append([(x*cosang+y*sinang)*self.size+self.pos.getA(),(-x*sinang+y*cosang)*self.size+self.pos.getB()])
-            b.append([(x*cosang+y*sinang)*self.size+self.pos.getA()+camera.getA(),(-x*sinang+y*cosang)*self.size+self.pos.getB()+camera.getB()])
+            b.append([((x*cosang+y*sinang)*self.size+self.pos.getA()+camera.getA())*zoom.getA()+s_width/2,((-x*sinang+y*cosang)*self.size+self.pos.getB()+camera.getB())*zoom.getB()+s_height/2])
         self.hitbox=a
         self.visuals=b
         self.UpdateDimensions()
     def UpdateDimensions(self):
+        global camera
+        global zoom
         min_x=self.hitbox[0][0]
         min_y=self.hitbox[0][1]
         max_x=self.hitbox[0][0]
@@ -258,10 +260,10 @@ class Object:
         self.dimensions.w=max_x-min_x
         self.dimensions.h=max_y-min_y
 
-        self.vis_dimensions.x=min_x+camera.getA()
-        self.vis_dimensions.y=min_y+camera.getB()
-        self.vis_dimensions.w=max_x-min_x
-        self.vis_dimensions.h=max_y-min_y
+        self.vis_dimensions.x=(min_x+camera.getA())*zoom.getA()+s_width/2
+        self.vis_dimensions.y=(min_y+camera.getB())*zoom.getB()+s_height/2
+        self.vis_dimensions.w=(max_x-min_x)*zoom.getA()
+        self.vis_dimensions.h=(max_y-min_y)*zoom.getB()
 
 class Tile(Object):
     #Any terrain object
@@ -327,6 +329,7 @@ running=True
 clock=pygame.time.Clock()
 fps=60
 camera=Point(0,0)
+zoom=Point(1,1)
 
 #Colors/Fonts
 ##Basic default colors
