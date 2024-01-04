@@ -315,10 +315,66 @@ class Edge:
         self.stop=copy[1]
         self.parent=copy[2]
 
+class Aura():
+    #An area of effect around an object
+    def __init__(self,pos=Point(),size=1,strength=0,parent=""):
+        self.pos=pos
+        self.size=size
+        self.strength=strength
+        self.parent=parent
+        self.dimensions=pygame.Rect(0,0,0,0)
+        self.vis_dimensions=pygame.Rect(0,0,0,0)
+        self.UpdateDimensions()
+        self._remove=False
+        self.UUID=str(uuid.uuid4())
+    def __str__(self):
+        return f'"{self.parent.getId()}", {self.parent.UUID}: {self.size}, {self.strength}'
+
+    def getPos(self):
+        return self.pos
+    def getSize(self):
+        return self.size
+    def getStrength(self):
+        return self.strength
+    def getParent(self):
+        return self.parent
+    def getDim(self):
+        return self.dimensions
+    def getVisDim(self):
+        return self.vis_dimensions
+    def getAuraCopy(self):
+        return [self.pos,self.size,self.strength,self.parent,self.UUID]
+
+    def setPos(self,pos):
+        self.pos=pos
+    def setSize(self,size):
+        self.size=size
+    def setStrength(self,strength):
+        self.strength=strength
+    def setParent(self,parent):
+        self.parent=parent
+    def setDim(self,dimensions):
+        self.dimensions=dimensions
+    def setAuraCopy(self,copy,copyUUID=False):
+        self.pos=copy[0]
+        self.size=copy[1]
+        self.strength=copy[2]
+        self.parent=copy[3]
+        if copyUUID:
+            self.UUID=copy[4]
+
+    def UpdateDimensions(self):
+
+        self.dimensions.center=self.getPos().getPoint()
+        self.dimensions.w=3*tile_size*self.size
+        self.dimensions.h=3*tile_size*self.size
+
+        self.vis_dimensions.center=[(self.getPos().getA()+camera.getA())*zoom.getA()+s_width/2,(self.getPos().getB()+camera.getB())*zoom.getB()+s_height/2]
+        self.vis_dimensions.w=(3*tile_size*self.size)*zoom.getA()
+        self.vis_dimensions.h=(3*tile_size*self.size)*zoom.getB()
 
 #Initialize Pygame
 pygame.init()
-
 
 #Screen Constants
 s_width=1024
