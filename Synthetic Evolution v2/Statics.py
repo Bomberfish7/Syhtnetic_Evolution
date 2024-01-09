@@ -396,6 +396,7 @@ camera=Point(0,0)
 zoom=Point(1,1)
 
 manager=gui.UIManager((s_width,s_height))
+manager.get_theme().load_theme('textbox_theme.json')
 
 #Colors/Fonts
 ##Basic default colors
