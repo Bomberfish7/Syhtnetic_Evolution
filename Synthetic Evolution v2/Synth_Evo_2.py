@@ -8,6 +8,7 @@
 #-------------------------------------------------------------------------------
 
 import pygame
+import pygame_gui as gui
 import math
 import numpy as np
 import random
@@ -781,7 +782,6 @@ screen.blit(dayscreen,(0,0))
 
 
 
-
 Terrain=[]
 Entities=dict()
 Foods=[]
@@ -811,7 +811,7 @@ MergeTiles()
 
 try:
     while running:
-        clock.tick(Globals.fps)
+        time_delta=clock.tick(Globals.fps)/1000.0
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -819,6 +819,7 @@ try:
                 pygame.quit()
                 sys.exit()
                 exit()
+            manager.process_events(event)
 
             if(event.type==pygame.MOUSEBUTTONDOWN):
                 if(event.button==1):
@@ -860,7 +861,6 @@ try:
 
             if(event.type==pygame.MOUSEWHEEL):
                 zoom.setPoint([np.clip(event.y/5+zoom.getA(),0.4,10),np.clip(event.y/5+zoom.getB(),0.4,10)])
-
 
             if(event.type==pygame.KEYDOWN):
                 if(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
@@ -915,7 +915,7 @@ try:
                 if(event.key==pygame.K_d):
                     Globals.cam_move_right=False
 
-
+        manager.update(time_delta)
 
 
 
@@ -942,6 +942,8 @@ try:
                     energy_text=font0.render(str("%.2f" % round(i.getEnergy(),2))+"/"+str("%.2f" % round(i.getMaxEN(),2)),False,green)
                     energy_text_rect=energy_text.get_rect()
                     size_text_rect.center=((i.getDim().midtop[0]+camera.getA())*zoom.getA()+s_width/2,(i.getDim().midtop[1]+camera.getB())*zoom.getB()+s_height/2-45)
+                    m
+
                     screen.blit(size_text,size_text_rect)
                     health_text_rect.center=((i.getDim().midtop[0]+camera.getA())*zoom.getA()+s_width/2,(i.getDim().midtop[1]+camera.getB())*zoom.getB()+s_height/2-27)
                     screen.blit(health_text,health_text_rect)
@@ -956,6 +958,8 @@ try:
         dayscreen.set_alpha((-2.55*Globals.light+255)*np.clip((135-Globals.timescale)/135,0.35,1))
         dayscreen.fill(c_night)
         screen.blit(dayscreen,(0,0))
+
+        manager.draw_ui(screen)
 
 
 

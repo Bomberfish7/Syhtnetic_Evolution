@@ -8,6 +8,7 @@
 #-------------------------------------------------------------------------------
 
 import pygame
+import pygame_gui as gui
 import math
 import numpy as np
 import uuid
@@ -83,7 +84,7 @@ class Circle:
 
 class Object:
     #Base object type for anything interactable in the simulation
-    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,immortal=False):
+    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,immortal=False,ui_label=None):
         if color is None:
             color=c_debug1
         if outline is None:
@@ -112,6 +113,7 @@ class Object:
         self.max_health=max_health
         self.max_energy=max_energy
         self.immortal=immortal
+        self.ui_label=ui_label
         self._remove=False
         self.UUID=str(uuid.uuid4())
     def __str__(self):
@@ -159,8 +161,10 @@ class Object:
         return self.max_health*self.size
     def getMaxEN(self):
         return self.max_energy*self.size
+    def getLabel(self):
+        return self.ui_label
     def getObjectCopy(self):
-        return [self.pos,self.delta,self.angle,self.shape,self.size,self.hitbox,self.dimensions,self.color,self.outline,self.mass,self.friction,self.obj_id,self.health,self.energy,self.max_health,self.max_energy,self.immortal,self.UUID]
+        return [self.pos,self.delta,self.angle,self.shape,self.size,self.hitbox,self.dimensions,self.color,self.outline,self.mass,self.friction,self.obj_id,self.health,self.energy,self.max_health,self.max_energy,self.immortal,self.ui_label,self.UUID]
 
     def setPos(self,pos):
         self.pos=pos
@@ -195,7 +199,9 @@ class Object:
     def setMaxHP(self,max_health):
         self.max_health=max_health
     def setMaxEN(self,max_energy):
-        self.max_energy-max_energy
+        self.max_energy=max_energy
+    def setLabel(self,ui_label):
+        self.ui_label=ui_label
     def setObjectCopy(self,copy,copyUUID=False):
         self.pos=Point(copy[0].getA(),copy[0].getB())
         self.delta=Point(copy[1].getA(),copy[1].getB())
@@ -217,8 +223,9 @@ class Object:
         self.max_health=copy[14]
         self.max_energy=copy[15]
         self.immortal=copy[16]
+        self.ui_label=copy[17]
         if(copyUUID):
-            self.UUID=copy[17]
+            self.UUID=copy[18]
 
     def DeathTest(self):
         if(self.immortal or self.health>0):
@@ -384,8 +391,11 @@ tile_offset=tile_size/2
 running=True
 clock=pygame.time.Clock()
 fps=60
+time_delta=0
 camera=Point(0,0)
 zoom=Point(1,1)
+
+manager=gui.UIManager((s_width,s_height))
 
 #Colors/Fonts
 ##Basic default colors

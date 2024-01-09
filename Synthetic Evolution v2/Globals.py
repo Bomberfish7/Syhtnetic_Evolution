@@ -8,6 +8,7 @@
 #-------------------------------------------------------------------------------
 
 import pygame
+import pygame_gui as gui
 import math
 import numpy as np
 from Statics import *
@@ -28,7 +29,7 @@ Remove_Colliding_Indexes=set()
 
 ##Foods
 #Plants
-base_Grass=Plant(shape=[Point(-5,0),Point(5,0),Point(0,-18)],outline=c_grass,obj_id="Grass",max_health=45,max_energy=30,digestion_speed=5.0,energy_regen=0.25)
+base_Grass=Plant(shape=[Point(-5,0),Point(5,0),Point(0,-18)],outline=c_grass,obj_id="Grass",max_health=45,max_energy=30,digestion_speed=5.0,energy_regen=0.25,ui_label=gui.elements.ui_text_box.UITextBox(html_text="<body bgcolor='#4b4b4b64'><font face='freesansbold' color='#1932e1' size=16px>Lorem Ipsum"+" AAA</font></body>",relative_rect=pygame.Rect(0,0,300,20),manager=manager,wrap_to_height=True,visible=2))
 base_Bush=Plant(shape=[Point(-10,0),Point(0,10),Point(10,0),Point(0,-10)],outline=c_bush,obj_id="Bush",max_health=100,max_energy=100,digestion_speed=3.0,energy_regen=0.75)
 base_Tree=Plant(shape=[Point(-25,0),Point(-18,18),Point(0,25),Point(18,18),Point(25,0),Point(18,-18),Point(0,-25),Point(-18,-18)],outline=c_tree,obj_id="Tree",max_health=650,max_energy=400,digestion_speed=1.5,energy_regen=1.5)
 base_Kelp=Plant(shape=[Point(-5,0),Point(0,-5),Point(5,0),Point(0,-18)],outline=c_kelp,obj_id="Kelp",max_health=30,max_energy=20,digestion_speed=6.5,energy_regen=0.5,aquatic=1)
