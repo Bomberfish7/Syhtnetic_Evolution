@@ -100,6 +100,7 @@ class Object:
         self.size=size
         self.hitbox=None
         self.visuals=None
+        self.ui_label= ui_label
         self.dimensions=pygame.Rect(0,0,0,0)
         self.vis_dimensions=pygame.Rect(0,0,0,0)
         self.UpdateHitbox()
@@ -113,7 +114,10 @@ class Object:
         self.max_health=max_health
         self.max_energy=max_energy
         self.immortal=immortal
-        self.ui_label=ui_label
+
+        if self.ui_label == None:
+            self.ui_label = gui.elements.ui_text_box.UITextBox(html_text="<body><font face='freesansbold' color='#1932e1' size=16px>Lorem Ipsum"+" AAA</font></body>",relative_rect=pygame.Rect(self.vis_dimensions.x-self.vis_dimensions.w/2,self.vis_dimensions.y-45,160,192),wrap_to_height=False,visible=2)
+        self.ui_label.visible=False
         self._remove=False
         self.UUID=str(uuid.uuid4())
     def __str__(self):
@@ -223,7 +227,7 @@ class Object:
         self.max_health=copy[14]
         self.max_energy=copy[15]
         self.immortal=copy[16]
-        self.ui_label=copy[17]
+##        self.ui_label=copy[17]
         if(copyUUID):
             self.UUID=copy[18]
 
@@ -271,12 +275,25 @@ class Object:
         self.vis_dimensions.y=(min_y+camera.getB())*zoom.getB()+s_height/2
         self.vis_dimensions.w=(max_x-min_x)*zoom.getA()
         self.vis_dimensions.h=(max_y-min_y)*zoom.getB()
+        self.generateLabel()
+##        if(self.ui_label != None):
+##            self.ui_label.set_position((self.vis_dimensions.x,self.vis_dimensions.y-45))
+####            print(self.ui_label.html_text)
+##            self.ui_label.set_dimensions((240,192))
+##            self.ui_label.rebuild()
+    def generateLabel(self):
+        self.ui_label = gui.elements.ui_text_box.UITextBox(html_text="<body><font face='freesansbold' color='#1932e1' size=16px>Lorem Ipsum"+" AAA</font></body>",relative_rect=pygame.Rect(self.vis_dimensions.x-self.vis_dimensions.w/2,self.vis_dimensions.y-45,160,192),wrap_to_height=False,visible=2)
+    def toggleLabel(self):
+        self.ui_label.visible = not self.ui_label.visible
+        self.ui_label.set_position((self.vis_dimensions.x-self.vis_dimensions.w/2,self.vis_dimensions.y-45))
 
 class Tile(Object):
     #Any terrain object
     def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,immortal=True,tile=0):
         super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,immortal)
         self.tile=tile
+        self.ui_label.html_text="<p>Tile</p>"
+        self.ui_label.visible=False
     def __str__(self):
         return f'Tile:\"{self.obj_id}\"\t [Pos:{self.pos}, Speed:{self.delta}, Size:{(self.dimensions.w,self.dimensions.h)}, Tile Type:{self.tile}]'
     def getObjStr(self):
@@ -292,6 +309,8 @@ class Tile(Object):
     def setTileCopy(self,copy):
         self.setObjectCopy(copy[0])
         self.tile=copy[1]
+    def generateLabel(self):
+        pass
 
 class Edge:
     #An Edge line for an object

@@ -90,7 +90,8 @@ def CreateBaseFood(pos,angle,size,food_type):
     new_food.setSize(size)
     new_food.UpdateHitbox()
     new_food.setOutline((np.clip(new_food.getColor()[0]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[1]+random.randint(-25,25),0,255),np.clip(new_food.getColor()[2]+random.randint(-25,25),0,255)))
-    new_food.setLabel(gui.elements.ui_text_box.UITextBox(html_text="<body><font face='freesansbold' color='#1932e1' size=16px>Lorem Ipsum"+" AAA</font></body>",relative_rect=pygame.Rect((new_food.getPos().getA()+camera.getA())*zoom.getA()+s_width/2,(new_food.getPos().getB()+camera.getB())*zoom.getB()+s_height/2,300,20),wrap_to_height=True,visible=2))
+    new_food.toggleLabel()
+##    new_food.setLabel()
     return new_food
 
 def CreateFood(pos,angle,size,energy,food):
@@ -793,7 +794,7 @@ Base_Terrain=[]
 Base_Creatures=[]
 
 
-
+sim_speed_label = gui.elements.ui_label.UILabel(pygame.rect.Rect(0,0,500,100),"UPS: "+str(timescale))
 
 
 test_terrain=[]
@@ -959,7 +960,6 @@ try:
         dayscreen.set_alpha((-2.55*Globals.light+255)*np.clip((135-Globals.timescale)/135,0.35,1))
         dayscreen.fill(c_night)
         screen.blit(dayscreen,(0,0))
-
         manager.draw_ui(screen)
 
 
