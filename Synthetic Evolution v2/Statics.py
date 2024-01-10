@@ -275,7 +275,7 @@ class Object:
         self.vis_dimensions.y=(min_y+camera.getB())*zoom.getB()+s_height/2
         self.vis_dimensions.w=(max_x-min_x)*zoom.getA()
         self.vis_dimensions.h=(max_y-min_y)*zoom.getB()
-        self.generateLabel()
+##        self.generateLabel()
 ##        if(self.ui_label != None):
 ##            self.ui_label.set_position((self.vis_dimensions.x,self.vis_dimensions.y-45))
 ####            print(self.ui_label.html_text)
