@@ -100,10 +100,7 @@ class Object:
         self.size=size
         self.hitbox=None
         self.visuals=None
-        self.ui_label= ui_label
-        self.dimensions=pygame.Rect(0,0,0,0)
-        self.vis_dimensions=pygame.Rect(0,0,0,0)
-        self.UpdateHitbox()
+        self.ui_label=ui_label
         self.color=color
         self.outline=outline
         self.mass=mass
@@ -114,10 +111,13 @@ class Object:
         self.max_health=max_health
         self.max_energy=max_energy
         self.immortal=immortal
-
+        self.dimensions=pygame.Rect(0,0,0,0)
+        self.vis_dimensions=pygame.Rect(0,0,0,0)
         if self.ui_label == None:
-            self.ui_label = gui.elements.ui_text_box.UITextBox(html_text="<body><font face='freesansbold' color='#1932e1' size=16px>Lorem Ipsum"+" AAA</font></body>",relative_rect=pygame.Rect(self.vis_dimensions.x-self.vis_dimensions.w/2,self.vis_dimensions.y-45,160,192),wrap_to_height=False,visible=2)
-        self.ui_label.visible=False
+            self.ui_label = gui.elements.ui_text_box.UITextBox(html_text="<font face='freesansbold' color='#1932e1' size=16px><b>Lorem Ipsum</b></font>",relative_rect=pygame.Rect(self.vis_dimensions.x-80,self.vis_dimensions.y-45,160,75),visible=0)
+        self.UpdateHitbox()
+
+        self._update_lable_timer=5
         self._remove=False
         self.UUID=str(uuid.uuid4())
     def __str__(self):
@@ -167,8 +167,10 @@ class Object:
         return self.max_energy*self.size
     def getLabel(self):
         return self.ui_label
+    def getLabelCopy(self):
+        return [self.ui_label.html_text,self.ui_label.relative_rect,self.ui_label.visible]
     def getObjectCopy(self):
-        return [self.pos,self.delta,self.angle,self.shape,self.size,self.hitbox,self.dimensions,self.color,self.outline,self.mass,self.friction,self.obj_id,self.health,self.energy,self.max_health,self.max_energy,self.immortal,self.ui_label,self.UUID]
+        return [self.pos,self.delta,self.angle,self.shape,self.size,self.hitbox,self.dimensions,self.color,self.outline,self.mass,self.friction,self.obj_id,self.health,self.energy,self.max_health,self.max_energy,self.immortal,[self.ui_label.html_text,self.ui_label.relative_rect,self.ui_label.visible],self.UUID]
 
     def setPos(self,pos):
         self.pos=pos
@@ -205,7 +207,11 @@ class Object:
     def setMaxEN(self,max_energy):
         self.max_energy=max_energy
     def setLabel(self,ui_label):
-        self.ui_label=ui_label
+        self.ui_label.html_text=ui_label[0]
+        self.ui_label.relative_rect=ui_label[1]
+        self.ui_label.visible=ui_label[2]
+    def setLabelVis(self,visible):
+        self.ui_label.visible=visible
     def setObjectCopy(self,copy,copyUUID=False):
         self.pos=Point(copy[0].getA(),copy[0].getB())
         self.delta=Point(copy[1].getA(),copy[1].getB())
@@ -227,7 +233,9 @@ class Object:
         self.max_health=copy[14]
         self.max_energy=copy[15]
         self.immortal=copy[16]
-##        self.ui_label=copy[17]
+        self.ui_label.html_text=copy[17][0]
+        self.ui_label.relative_rect=copy[17][1]
+        self.ui_label.visible=copy[17][2]
         if(copyUUID):
             self.UUID=copy[18]
 
@@ -275,17 +283,20 @@ class Object:
         self.vis_dimensions.y=(min_y+camera.getB())*zoom.getB()+s_height/2
         self.vis_dimensions.w=(max_x-min_x)*zoom.getA()
         self.vis_dimensions.h=(max_y-min_y)*zoom.getB()
-##        self.generateLabel()
-##        if(self.ui_label != None):
-##            self.ui_label.set_position((self.vis_dimensions.x,self.vis_dimensions.y-45))
-####            print(self.ui_label.html_text)
-##            self.ui_label.set_dimensions((240,192))
-##            self.ui_label.rebuild()
+
     def generateLabel(self):
-        self.ui_label = gui.elements.ui_text_box.UITextBox(html_text="<body><font face='freesansbold' color='#1932e1' size=16px>Lorem Ipsum"+" AAA</font></body>",relative_rect=pygame.Rect(self.vis_dimensions.x-self.vis_dimensions.w/2,self.vis_dimensions.y-45,160,192),wrap_to_height=False,visible=2)
-    def toggleLabel(self):
-        self.ui_label.visible = not self.ui_label.visible
-        self.ui_label.set_position((self.vis_dimensions.x-self.vis_dimensions.w/2,self.vis_dimensions.y-45))
+        self._update_lable_timer+=1
+        energy_str="Energy: "+str("%.2f" % round(self.energy,2))+"/"+str("%.2f" % round(self.max_energy*self.size,2))
+        box_len=len(energy_str)
+        box_len*=10
+
+
+        self.ui_label.set_position(((self.vis_dimensions.x+self.vis_dimensions.w/2)-box_len/2+2,(self.vis_dimensions.top)-75))
+        if self._update_lable_timer>=5:
+
+            self.ui_label.set_dimensions((box_len,85))
+            self.ui_label.set_text("<font face='freesansbold' color='#1932e1' size=16px><b>Size: "+str("%.2f" % round(self.size,2))+"</b></font><br><font face='freesansbold' color='#e13232' size=16px><b>Health: "+str("%.2f" % round(self.health,2))+"/"+str("%.2f" % round(self.max_health*self.size,2))+"</b></font><br><font face='freesansbold' color='#19c819' size=16px><b>"+energy_str+"&nbsp</b></font>")
+            self._update_lable_timer=0
 
 class Tile(Object):
     #Any terrain object
@@ -410,7 +421,11 @@ tile_offset=tile_size/2
 running=True
 clock=pygame.time.Clock()
 fps=60
+ups=fps
 time_delta=0
+UPS_samples=fps
+vis_UPS=[0]*UPS_samples
+vis_UPS_counter=0
 camera=Point(0,0)
 zoom=Point(1,1)
 

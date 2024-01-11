@@ -25,11 +25,9 @@ cluster_classes=[FoodCluster,PlantCluster,MushroomCluster]
 
 Base_Foods=[]
 
-Remove_Colliding_Indexes=set()
-
 ##Foods
 #Plants
-base_Grass=Plant(shape=[Point(-5,0),Point(5,0),Point(0,-18)],outline=c_grass,obj_id="Grass",max_health=45,max_energy=30,digestion_speed=5.0,energy_regen=0.25,ui_label=gui.elements.ui_text_box.UITextBox(html_text="<body><font face='freesansbold' color='#1932e1' size=16px>Lorem Ipsum"+" AAA</font></body>",relative_rect=pygame.Rect(0,0,300,20),wrap_to_height=False,visible=2))
+base_Grass=Plant(shape=[Point(-5,0),Point(5,0),Point(0,-18)],outline=c_grass,obj_id="Grass",max_health=45,max_energy=30,digestion_speed=5.0,energy_regen=0.25,ui_label=gui.elements.ui_text_box.UITextBox(html_text="<body><font face='freesansbold' color='#1932e1' size=16px>Lorem Ipsum"+" AAA</font></body>",relative_rect=pygame.Rect(0,0,300,20),wrap_to_height=False,visible=0))
 base_Bush=Plant(shape=[Point(-10,0),Point(0,10),Point(10,0),Point(0,-10)],outline=c_bush,obj_id="Bush",max_health=100,max_energy=100,digestion_speed=3.0,energy_regen=0.75)
 base_Tree=Plant(shape=[Point(-25,0),Point(-18,18),Point(0,25),Point(18,18),Point(25,0),Point(18,-18),Point(0,-25),Point(-18,-18)],outline=c_tree,obj_id="Tree",max_health=650,max_energy=400,digestion_speed=1.5,energy_regen=1.5)
 base_Kelp=Plant(shape=[Point(-5,0),Point(0,-5),Point(5,0),Point(0,-18)],outline=c_kelp,obj_id="Kelp",max_health=30,max_energy=20,digestion_speed=6.5,energy_regen=0.5,aquatic=1)
@@ -45,10 +43,10 @@ base_Fish=PreyFood(shape=[Point(-8,-4),Point(-8,4),Point(8,4),Point(8,-4)],outli
 #Egg (Unfinished)
 base_Egg=Food(shape=[Point(-5,1),Point(0,3),Point(5,1),Point(0,-8)],outline=c_egg,obj_id="Egg",max_health=3,max_energy=150,digestion_speed=50.0,energy_regen=0.0,aquatic=0.5)
 
-shape_Grass = [Point(-5,0),Point(5,0),Point(0,-18)]
+shape_Grass = [Point(-5,9),Point(5,9),Point(0,-9)]
 shape_Bush = [Point(-10,0),Point(0,10),Point(10,0),Point(0,-10)]
 shape_Tree = [Point(-25,0),Point(-18,18),Point(0,25),Point(18,18),Point(25,0),Point(18,-18),Point(0,-25),Point(-18,-18)]
-shape_Kelp = [Point(-5,0),Point(0,-5),Point(5,0),Point(0,-18)]
+shape_Kelp = [Point(-5,9),Point(0,4),Point(5,9),Point(0,-9)]
 shape_Fruit = [Point(-5,0),Point(0,5),Point(5,0),Point(0,-5)]
 shape_Mushroom = [Point(0,0),Point(11,-6),Point(-11,-6)]
 shape_Meat = [Point(-7,0),Point(0,7),Point(7,0),Point(0,-7)]
@@ -58,10 +56,10 @@ shape_Fish = [Point(-8,-4),Point(-8,4),Point(8,4),Point(8,-4)]
 shape_Egg = [Point(-5,1),Point(0,3),Point(5,1),Point(0,-8)]
 
 ##Clusters
-cluster_Grass=[Point(-2.5,0),Point(-3,-6),Point(-2,-3),Point(-1,-9),Point(0,-4),Point(1,-9),Point(2,-3),Point(3,-6),Point(2.5,0)]
+cluster_Grass=[Point(-2.5,4.5),Point(-3,-1.5),Point(-2,1.5),Point(-1,-4.5),Point(0,0.5),Point(1,-4.5),Point(2,1.5),Point(3,-1.5),Point(2.5,4.5)]
 cluster_Bush=[Point(-5,0),Point(-2,-2),Point(0,-5),Point(2,-2),Point(5,0),Point(2,2),Point(0,5),Point(-2,2)]
 cluster_Tree=[Point(-12.5,0),Point(-9.5,-5.5),Point(-9,-9),Point(-5.5,-9.5),Point(0,-12.5),Point(5.5,-9.5),Point(9,-9),Point(9.5,-5.5),Point(12.5,0),Point(9.5,5.5),Point(9,9),Point(5.5,9.5),Point(0,12.5),Point(-5.5,9.5),Point(-9,9),Point(-9.5,5.5)]
-cluster_Kelp=[Point(-2.5,0),Point(-3,-6),Point(-2,-3),Point(-1,-9),Point(0,-4),Point(1,-9),Point(2,-3),Point(3,-6),Point(2.5,0),Point(1.5,-1.5),Point(0,0),Point(-1.5,-1.5)]
+cluster_Kelp=[Point(-2.5,4.5),Point(-3,-1.5),Point(-2,1.5),Point(-1,-4.5),Point(0,0.5),Point(1,-4.5),Point(2,1.5),Point(3,-1.5),Point(2.5,4.5),Point(1.5,3),Point(0,4.5),Point(-1.5,3)]
 
 cluster_Mushroom=[Point(0,0),Point(-2,-1.5),Point(-4,0),Point(-5.5,-3),Point(5.5,-3),Point(4,0),Point(2,-1.5)]
 cluster_Meat=[Point(-2,0),Point(-3.5,-3),Point(-3,-3.5),Point(0,-2),Point(3,-3.5),Point(3.5,-3),Point(2,0),Point(3.5,3),Point(3,3.5),Point(0,2),Point(-3,3.5),Point(-3.5,3)]
@@ -84,12 +82,37 @@ Base_Foods.append(base_Egg)
 
 devtest_foodspawn_type=0
 devtest_mode=False
+devtest_update_speed=0
 devtest_timeincrease=False
 cam_drag=False
 cam_move_up=False
 cam_move_down=False
 cam_move_left=False
 cam_move_right=False
+
+key_shift=False
+key_ctrl=False
+key_alt=False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
