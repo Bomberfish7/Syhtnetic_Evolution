@@ -40,6 +40,7 @@ def UpdateTime():
     else:
         Globals.light=round(80.0*(1.0/(1+math.exp((t-(Globals.day_length/2.0+a))/(Globals.day_length*-0.03))))+20)
 
+
     if Globals.cam_move_up:
         camera.setB(camera.getB()+50/ups)
     if Globals.cam_move_down:
@@ -811,8 +812,12 @@ food_type_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(0,30,200,25),"Foo
 UPS_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(0,0,100,25),"UPS: "+str("%.2f" % round(time_delta,2)),visible=0)
 
 time_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(0,50,200,25),"Simulation Time: "+str("%.2f" % round(Globals.time,2)),visible=0)
-#clock_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(0,65,200,25),"Sim Clock: "+str("%.2f" % round(TEST,2)),visible=0)
-light_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(0,65,200,25),"Light: "+str("%.2f" % round(Globals.light,2)),visible=0)
+
+sim_clock_frac=(Globals.time%Globals.day_length)*24
+sim_hour=int(sim_clock_frac)
+sim_minute=int((sim_clock_frac-sim_hour)*60)
+clock_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(0,65,150,25),"Sim Clock: "+str("%02d" % sim_hour)+":"+str("%02d" % sim_minute),visible=0)
+light_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(150,65,200,25),"Light: "+str("%.2f" % round(Globals.light,2)),visible=0)
 
 
 test_terrain=[]
@@ -846,8 +851,15 @@ try:
             food_type_label.set_text("Food: "+Globals.Base_Foods[Globals.devtest_foodspawn_type].getId())
             food_type_label.visible=1
 
-            time_label.set_text("Simulation Time: "+str("%.2f" % round(Globals.time/ups,2)))
+            time_format = "%.2f" if Globals.time/ups < 10000 else "%.2e"
+            time_label.set_text("Simulation Time: "+str(time_format % round(Globals.time/ups,2)))
             time_label.visible=1
+
+            sim_clock_frac=(Globals.time%Globals.day_length)/Globals.day_length*24
+            sim_hour=(int(sim_clock_frac)-10)%24
+            sim_minute=int((sim_clock_frac % 1)*60)
+            clock_label.set_text("Sim Clock: "+str("%02d" % sim_hour)+":"+str("%02d" % sim_minute))
+            clock_label.visible=1
 
             light_label.set_text("Light: "+str(Globals.light))
             light_label.visible=1
@@ -857,6 +869,7 @@ try:
             timescale_label.visible=0
             food_type_label.visible=0
             time_label.visible=0
+            clock_label.visible=0
             light_label.visible=0
 
         for event in pygame.event.get():
