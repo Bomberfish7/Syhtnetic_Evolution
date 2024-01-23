@@ -84,6 +84,7 @@ devtest_foodspawn_type=0
 devtest_mode=False
 devtest_update_speed=0
 devtest_timeincrease=False
+devtest_spawnMany=False
 cam_drag=False
 cam_move_up=False
 cam_move_down=False

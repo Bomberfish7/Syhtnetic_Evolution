@@ -900,17 +900,34 @@ try:
             if(event.type==pygame.MOUSEBUTTONUP):
                 if(event.button==1):
                     #Left Click
-                    newfood=CreateBaseFood(Point((pygame.mouse.get_pos()[0]-s_width/2)/zoom.getA()-camera.getA(),(pygame.mouse.get_pos()[1]-s_height/2)/zoom.getB()-camera.getB()),0,1,Globals.devtest_foodspawn_type)
-                    nf_UUID=newfood.UUID
-                    Entities[nf_UUID]=newfood
-                    Foods.append(nf_UUID)
-                    if Globals.devtest_mode:
-                        Entities[nf_UUID].setLabelVis(1)
-                    if(Globals.devtest_foodspawn_type==5):
-                        Entities[nf_UUID].GenerateAura()
-                        Entities[newfood.getAura().UUID]=newfood.getAura()
-                        Entities[nf_UUID].setAura(Entities[newfood.getAura().UUID])
-                        Auras.append(newfood.getAura().UUID)
+                    numSpawn=1
+                    xRand=0
+                    yRand=0
+                    radRand=50
+                    if(Globals.devtest_spawnMany):
+                        numSpawn=5
+                        if(Globals.devtest_foodspawn_type==2):
+                            radRand=100
+                    for i in range(numSpawn):
+                        if(numSpawn>1):
+                            # random angle
+                            alpha = 2 * math.pi * random.random()
+                            # random radius
+                            r = radRand * math.sqrt(random.uniform(0.1,1))
+                            # calculating coordinates
+                            xRand = r * math.cos(alpha)
+                            yRand = r * math.sin(alpha)
+                        newfood=CreateBaseFood(Point(((pygame.mouse.get_pos()[0]+xRand)-s_width/2)/zoom.getA()-camera.getA(),((pygame.mouse.get_pos()[1]+yRand)-s_height/2)/zoom.getB()-camera.getB()),0,1,Globals.devtest_foodspawn_type)
+                        nf_UUID=newfood.UUID
+                        Entities[nf_UUID]=newfood
+                        Foods.append(nf_UUID)
+                        if Globals.devtest_mode:
+                            Entities[nf_UUID].setLabelVis(1)
+                        if(Globals.devtest_foodspawn_type==5):
+                            Entities[nf_UUID].GenerateAura()
+                            Entities[newfood.getAura().UUID]=newfood.getAura()
+                            Entities[nf_UUID].setAura(Entities[newfood.getAura().UUID])
+                            Auras.append(newfood.getAura().UUID)
                 if(event.button==2):
                     #Middle Click
                     Globals.cam_drag=False
@@ -971,9 +988,16 @@ try:
                     Globals.timescale=1
                 elif(event.key==pygame.K_t):
                     Globals.devtest_mode=not Globals.devtest_mode
+                    clearKeys=list()
                     for key in Display_Info:
+                        if key not in Entities:
+                            clearKeys.append(key)
+                            continue
                         Entities[key].setLabelVis(1 if Globals.devtest_mode else 0)
-
+                    for i in clearKeys:
+                        Display_Info.remove(i)
+                elif(event.key==pygame.K_BACKSLASH):
+                    Globals.devtest_spawnMany=not(Globals.devtest_spawnMany)
 
 
                 if(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
