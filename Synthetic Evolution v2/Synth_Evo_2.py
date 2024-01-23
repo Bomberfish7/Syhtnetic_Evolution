@@ -848,7 +848,10 @@ try:
             timescale_label.set_text("Timescale: "+str(Globals.timescale))
             timescale_label.visible=1
 
-            food_type_label.set_text("Food: "+Globals.Base_Foods[Globals.devtest_foodspawn_type].getId())
+            food_multi_text=""
+            if(Globals.devtest_spawnMany):
+                food_multi_text=" x5"
+            food_type_label.set_text("Food: "+Globals.Base_Foods[Globals.devtest_foodspawn_type].getId()+food_multi_text)
             food_type_label.visible=1
 
             time_format = "%.2f" if Globals.time/ups < 10000 else "%.2e"
