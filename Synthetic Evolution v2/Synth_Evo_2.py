@@ -14,6 +14,7 @@ import numpy as np
 import random
 import traceback
 import sys
+import json
 
 from Globals import *
 from Statics import *
@@ -737,6 +738,12 @@ def FoodMove(key):
     Entities[key].Move()
 
 
+def SaveData():
+
+    saveFile = open("savedata.json",mode='w+',encoding='utf-8')
+    entities = json.dump(Entities,saveFile)
+
+
 
 #Food Reproduction
 #   Grass: Random chance to spawn another Grass within range of itself [Cost=50%, Requirement=90%-100%, Size=~0.5]
@@ -1001,6 +1008,14 @@ try:
                         Display_Info.remove(i)
                 elif(event.key==pygame.K_BACKSLASH):
                     Globals.devtest_spawnMany=not(Globals.devtest_spawnMany)
+                elif(event.key==pygame.K_BACKQUOTE):
+                    if(Globals.key_ctrl):
+                        #save
+                        #SaveData()
+                        pass
+                    elif(Globals.key_alt):
+                        #load
+                        pass
 
 
                 if(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
