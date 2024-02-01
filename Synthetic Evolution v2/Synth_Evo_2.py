@@ -15,6 +15,9 @@ import random
 import traceback
 import sys
 import json
+from perlin_noise import PerlinNoise
+import matplotlib.pyplot as plt
+from types import SimpleNamespace
 
 from Globals import *
 from Statics import *
@@ -125,6 +128,11 @@ def CreateFood(pos,angle,size,energy,food):
 def TileUpdate():
     #Updates all terrain tiles
     global test_terrain
+    global Entities
+    global Terrain
+
+    for i in Terrain:
+        Entities[i].UpdateDimensions()
 
     for i in test_terrain:
         i.UpdateDimensions()
@@ -737,6 +745,28 @@ def FoodMove(key):
 
     Entities[key].Move()
 
+def MakeTile(gridX,gridY,color=c_water,obj_id="water",tile=1):
+    newTile=Tile(pos=Point(tile_size*gridX,tile_size*gridY),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
+    return newTile
+
+def MapGenerator():
+    global Entities
+    global Terrain
+    noise_values=[[Terrain_Noise([x/tile_boundary[0],y/tile_boundary[1]]) for y in range(tile_boundary[1])] for x in range(tile_boundary[0])]
+    plt.imshow(noise_values, cmap='gray')
+    plt.show()
+    tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
+    for x in range(tile_boundary[0]):
+        for y in range(tile_boundary[1]):
+            tile_type=1 if(noise_values[x][y]>0) else 0
+            newTile=MakeTile(x-tile_boundary[0]/2,y-tile_boundary[1]/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
+            Entities[newTile.UUID]=newTile
+            Terrain.append(newTile.UUID)
+            Entities[newTile.UUID].UpdateHitbox()
+##            if((x-tile_boundary[0]/2) % 1 != 0 or (y-tile_boundary[1]/2) % 1 != 0):
+##                print(str(x-tile_boundary[0]/2)+" ",str(y-tile_boundary[1]/2))
+##    print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in noise_values]))
+
 
 def SaveData():
 
@@ -800,6 +830,7 @@ dayscreen.set_alpha(0)
 dayscreen.fill(c_night)
 screen.blit(dayscreen,(0,0))
 
+Terrain_Noise=PerlinNoise(octaves=4,seed=1)
 
 
 Terrain=[]
@@ -812,7 +843,7 @@ Display_Info=[]
 Base_Terrain=[]
 Base_Creatures=[]
 
-
+MapGenerator()
 
 timescale_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(0,15,200,25),"Timescale: "+str(Globals.timescale),visible=0)
 food_type_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(0,30,200,25),"Food: ",visible=0)
@@ -838,6 +869,8 @@ test_terrain.append(Tile(pos=Point(tile_size*10,tile_size*5),shape=[Point(tile_o
 test_terrain.append(Tile(pos=Point(tile_size*9,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_water,obj_id="Water",tile=1))
 test_terrain.append(Tile(pos=Point(tile_size*8,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_water,obj_id="Water",tile=1))
 test_terrain.append(Tile(pos=Point(tile_size*10,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_water,obj_id="Water",tile=1))
+
+test_terrain.append(MakeTile(0,0))
 
 MergeTiles()
 
@@ -1047,6 +1080,9 @@ try:
         for i in test_terrain:
             pygame.draw.rect(screen,i.getColor(),i.getVisDim())
 
+        for i in Terrain:
+            pygame.draw.rect(screen,Entities[i].getColor(),Entities[i].getVisDim(),border_radius=0)
+
         #for i in test_shapes:
             #pygame.draw.polygon(screen,i.getOutline(),i.getHitbox(),3)
 
@@ -1059,7 +1095,7 @@ try:
 
                 elif(key in Auras):
                     pygame.draw.rect(screen,green,i.getVisDim(),1)
-            if(key not in Auras):
+            if(key not in Auras and key not in Terrain):
                 pygame.draw.polygon(screen,i.getOutline(),i.getVisuals(),3)
 
 

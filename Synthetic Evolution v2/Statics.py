@@ -418,6 +418,8 @@ s_width=1024
 s_height=576
 tile_size=32
 tile_offset=tile_size/2
+tile_screens=1.5
+tile_boundary=[int(32*tile_screens),int(18*tile_screens)]
 running=True
 clock=pygame.time.Clock()
 fps=60
@@ -462,6 +464,7 @@ c_fish=(25,25,40)
 
 ##Terrain Colors
 c_water=(75,165,240)
+c_land=(73, 99, 15)
 
 font0=pygame.font.Font('freesansbold.ttf',16)
 font1=pygame.font.Font('freesansbold.ttf',8)
