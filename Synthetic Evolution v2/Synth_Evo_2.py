@@ -763,9 +763,10 @@ def MakeTile(gridX,gridY,color=c_water,obj_id="water",tile=1):
 def MapGenerator():
     global Entities
     global Terrain
+    global maps_generated
     Terrain_Noise=PerlinNoise(octaves=3)
     noise_values=[[Terrain_Noise([x/tile_boundary[0],y/tile_boundary[1]]) for y in range(tile_boundary[1])] for x in range(tile_boundary[0])]
-    if(Globals.devtest_mode):
+    if(Globals.devtest_mode or maps_generated==0):
         plt.imshow(noise_values, cmap='gray')
         plt.show()
     tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
@@ -776,6 +777,7 @@ def MapGenerator():
             Entities[newTile.UUID]=newTile
             Terrain.append(newTile.UUID)
             Entities[newTile.UUID].UpdateHitbox()
+    maps_generated+=1
 ##            if((x-tile_boundary[0]/2) % 1 != 0 or (y-tile_boundary[1]/2) % 1 != 0):
 ##                print(str(x-tile_boundary[0]/2)+" ",str(y-tile_boundary[1]/2))
 ##    print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in noise_values]))

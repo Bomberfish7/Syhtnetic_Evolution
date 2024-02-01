@@ -420,6 +420,7 @@ tile_size=32
 tile_offset=tile_size/2
 tile_screens=1.5
 tile_boundary=[int(32*tile_screens),int(18*tile_screens)]
+maps_generated=0
 running=True
 clock=pygame.time.Clock()
 fps=60
