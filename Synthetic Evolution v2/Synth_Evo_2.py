@@ -515,6 +515,7 @@ def ClearRemoves():
     global Auras
     global Creatures
     global Entities
+    global Terrain
 
     for key in Foods:
         if key in Entities:
@@ -538,6 +539,16 @@ def ClearRemoves():
                 Entities[key].getLabel().kill()
                 Creatures.remove(key)
                 del Entities[key]
+
+    for key in Terrain:
+        if key in Entities:
+            if Entities[key]._remove==True:
+                Entities[key].getLabel().kill()
+                Terrain.remove(key)
+                del Entities[key]
+                if(len(Terrain)==0):
+                    MapGenerator()
+                    break
 
 def MergeClusters(a,b):
     #Merges like foods into clusters
@@ -752,13 +763,15 @@ def MakeTile(gridX,gridY,color=c_water,obj_id="water",tile=1):
 def MapGenerator():
     global Entities
     global Terrain
+    Terrain_Noise=PerlinNoise(octaves=3)
     noise_values=[[Terrain_Noise([x/tile_boundary[0],y/tile_boundary[1]]) for y in range(tile_boundary[1])] for x in range(tile_boundary[0])]
-    plt.imshow(noise_values, cmap='gray')
-    plt.show()
+    if(Globals.devtest_mode):
+        plt.imshow(noise_values, cmap='gray')
+        plt.show()
     tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
     for x in range(tile_boundary[0]):
         for y in range(tile_boundary[1]):
-            tile_type=1 if(noise_values[x][y]>0) else 0
+            tile_type=1 if(noise_values[x][y]<-0.125) else 0
             newTile=MakeTile(x-tile_boundary[0]/2,y-tile_boundary[1]/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
             Entities[newTile.UUID]=newTile
             Terrain.append(newTile.UUID)
@@ -830,7 +843,7 @@ dayscreen.set_alpha(0)
 dayscreen.fill(c_night)
 screen.blit(dayscreen,(0,0))
 
-Terrain_Noise=PerlinNoise(octaves=4,seed=1)
+Terrain_Noise=PerlinNoise(octaves=1)
 
 
 Terrain=[]
@@ -861,16 +874,16 @@ light_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(150,65,200,25),"Light
 test_terrain=[]
 for j in range(3,6):
     for i in range(5,10):
-        test_terrain.append(Tile(pos=Point(tile_size*i,tile_size*j),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_water,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*7,tile_size*2),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_water,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*8,tile_size*2),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_water,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*4,tile_size*4),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_water,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*10,tile_size*5),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_water,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*9,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_water,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*8,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_water,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*10,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_water,obj_id="Water",tile=1))
+        test_terrain.append(Tile(pos=Point(tile_size*i,tile_size*j),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+test_terrain.append(Tile(pos=Point(tile_size*7,tile_size*2),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+test_terrain.append(Tile(pos=Point(tile_size*8,tile_size*2),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+test_terrain.append(Tile(pos=Point(tile_size*4,tile_size*4),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+test_terrain.append(Tile(pos=Point(tile_size*10,tile_size*5),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+test_terrain.append(Tile(pos=Point(tile_size*9,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+test_terrain.append(Tile(pos=Point(tile_size*8,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+test_terrain.append(Tile(pos=Point(tile_size*10,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
 
-test_terrain.append(MakeTile(0,0))
+test_terrain.append(MakeTile(0,0,color=c_testwater))
 
 MergeTiles()
 
@@ -1049,6 +1062,13 @@ try:
                     elif(Globals.key_alt):
                         #load
                         pass
+                elif(event.key==pygame.K_SPACE):
+                    if(Globals.key_ctrl and Globals.key_shift and Globals.key_alt):
+                        if(len(Terrain)>0):
+                            for i in Terrain:
+                                Entities[i]._remove=True
+                        else:
+                            MapGenerator()
 
 
                 if(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
@@ -1077,11 +1097,11 @@ try:
 
         screen.fill(c_background)
 
-        for i in test_terrain:
-            pygame.draw.rect(screen,i.getColor(),i.getVisDim())
-
         for i in Terrain:
             pygame.draw.rect(screen,Entities[i].getColor(),Entities[i].getVisDim(),border_radius=0)
+
+##        for i in test_terrain:
+##            pygame.draw.rect(screen,i.getColor(),i.getVisDim())
 
         #for i in test_shapes:
             #pygame.draw.polygon(screen,i.getOutline(),i.getHitbox(),3)
