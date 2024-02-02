@@ -411,16 +411,15 @@ def SAPCheckEdges(edge_list):
 
     for i in edge_list:
         if (Entities.get(i.getParent(),False)==False
-         or Entities[i.getParent()]._remove
-         or type(Entities[i.getParent()]) is Tile
-         or type(Entities[i.getParent()]) is Aura):
+         or Entities[i.getParent()]._remove):
             continue
         else:
             if i.getStop():
                 if i.getParent() in check:
                     check.remove(i.getParent())
             else:
-                if len(check)>0:
+                if (len(check)>0 and type(Entities[i.getParent()]) is not Tile
+                 and type(Entities[i.getParent()]) is not Aura):
                     SAPCollison(i.getParent(),check)
                 check.append(i.getParent())
 
