@@ -410,7 +410,10 @@ def SAPCheckEdges(edge_list):
     check=[]
 
     for i in edge_list:
-        if Entities.get(i.getParent(),False)==False or Entities[i.getParent()]._remove:
+        if (Entities.get(i.getParent(),False)==False
+         or Entities[i.getParent()]._remove
+         or type(Entities[i.getParent()]) is Tile
+         or type(Entities[i.getParent()]) is Aura):
             continue
         else:
             if i.getStop():
@@ -426,6 +429,8 @@ def SAPCollison(a,check_list):
     global Entities
 
     for i in check_list:
+        if(type(Entities[a])==type(Entities[i])==Tile):
+            continue
         if(Entities[a].getDim().colliderect(Entities[i].getDim())):
             i_A=(type(Entities[i]) is Aura)
             a_A=(type(Entities[a]) is Aura)
