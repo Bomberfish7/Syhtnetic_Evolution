@@ -760,23 +760,41 @@ def MakeTile(gridX,gridY,color=c_water,obj_id="water",tile=1):
     newTile=Tile(pos=Point(tile_size*gridX,tile_size*gridY),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
     return newTile
 
+def GenerateChunk(chunkX, chunkY, noise_values):
+    global Entities
+    global Terrain
+    tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
+    for x in range(chunk_size):
+        for y in range(chunk_size):
+            noise_X = chunkX*chunk_size+x
+            noise_Y = chunkY*chunk_size+y
+            tile_type=1 if(noise_values[noise_X][noise_Y]<-0.125) else 0
+            newTile=MakeTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
+            Entities[newTile.UUID]=newTile
+            Terrain.append(newTile.UUID)
+            Entities[newTile.UUID].UpdateHitbox()
+
 def MapGenerator():
     global Entities
     global Terrain
     global maps_generated
     Terrain_Noise=PerlinNoise(octaves=3)
-    noise_values=[[Terrain_Noise([x/tile_boundary[0],y/tile_boundary[1]]) for y in range(tile_boundary[1])] for x in range(tile_boundary[0])]
+    noise_values=[[Terrain_Noise([x/tile_boundary,y/tile_boundary]) for y in range(tile_boundary)] for x in range(tile_boundary)]
     if(Globals.devtest_mode or maps_generated==0):
         plt.imshow(noise_values, cmap='gray')
         plt.show()
     tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
-    for x in range(tile_boundary[0]):
-        for y in range(tile_boundary[1]):
-            tile_type=1 if(noise_values[x][y]<-0.125) else 0
-            newTile=MakeTile(x-tile_boundary[0]/2,y-tile_boundary[1]/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
-            Entities[newTile.UUID]=newTile
-            Terrain.append(newTile.UUID)
-            Entities[newTile.UUID].UpdateHitbox()
+
+    for i in range(chunk_limit):
+        for j in range(chunk_limit):
+            GenerateChunk(i,j,noise_values)
+##    for x in range(tile_boundary[0]):
+##        for y in range(tile_boundary[1]):
+##            tile_type=1 if(noise_values[x][y]<-0.125) else 0
+##            newTile=MakeTile(x-tile_boundary[0]/2,y-tile_boundary[1]/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
+##            Entities[newTile.UUID]=newTile
+##            Terrain.append(newTile.UUID)
+##            Entities[newTile.UUID].UpdateHitbox()
     maps_generated+=1
 ##            if((x-tile_boundary[0]/2) % 1 != 0 or (y-tile_boundary[1]/2) % 1 != 0):
 ##                print(str(x-tile_boundary[0]/2)+" ",str(y-tile_boundary[1]/2))
