@@ -16,6 +16,7 @@ import traceback
 import sys
 import json
 from perlin_noise import PerlinNoise
+##import matplotlib
 import matplotlib.pyplot as plt
 from types import SimpleNamespace
 
@@ -765,12 +766,12 @@ def GenerateChunk(chunkX, chunkY, noise_values):
     global Terrain
     tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
     chunk_tile_types=[[1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<-0.125 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
-    print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in chunk_tile_types]))
+##    print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in chunk_tile_types]))
     for x in range(chunk_size):
         for y in range(chunk_size):
             noise_X = chunkX*chunk_size+x
             noise_Y = chunkY*chunk_size+y
-            tile_type=1 if(noise_values[noise_X][noise_Y]<-0.125) else 0
+            tile_type=chunk_tile_types[x][y]
             newTile=MakeTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
             Entities[newTile.UUID]=newTile
             Terrain.append(newTile.UUID)
@@ -781,15 +782,23 @@ def MapGenerator():
     global Terrain
     global maps_generated
     Terrain_Noise=PerlinNoise(octaves=3)
-    noise_values=[[Terrain_Noise([x/tile_boundary,y/tile_boundary]) for y in range(tile_boundary)] for x in range(tile_boundary)]
+    Detail_Noise=PerlinNoise(octaves=6)
+    noise_values=[[Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary]) for y in range(tile_boundary)] for x in range(tile_boundary)]
+##    plt.figure(1)
+##    plt.imshow(noise_values, cmap='gray')
+##    for i in range(tile_boundary):
+##        for j in range(tile_boundary):
+##            noise_values[i][j]+=0.5*Detail_Noise([i/tile_boundary,j/tile_boundary])
     if(Globals.devtest_mode or maps_generated==0):
+##        plt.figure(2)
         plt.imshow(noise_values, cmap='gray')
         plt.show()
 ##    tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
-
+##    print('=======================================================')
     for i in range(chunk_limit):
         for j in range(chunk_limit):
             GenerateChunk(i,j,noise_values)
+##    print('=======================================================')
 ##    for x in range(tile_boundary[0]):
 ##        for y in range(tile_boundary[1]):
 ##            tile_type=1 if(noise_values[x][y]<-0.125) else 0
@@ -864,6 +873,7 @@ dayscreen = pygame.Surface((s_width,s_height))
 dayscreen.set_alpha(0)
 dayscreen.fill(c_night)
 screen.blit(dayscreen,(0,0))
+
 
 Terrain_Noise=PerlinNoise(octaves=1)
 
@@ -1026,7 +1036,8 @@ try:
                     pass
 
             if(event.type==pygame.MOUSEWHEEL):
-                zoom.setPoint([np.clip(event.y/5+zoom.getA(),0.4,10),np.clip(event.y/5+zoom.getB(),0.4,10)])
+##                zoom.setPoint([np.clip(event.y/5+zoom.getA(),0.4,10),np.clip(event.y/5+zoom.getB(),0.4,10)])
+                zoom.setPoint([(1+event.y/10.0)*zoom.getA(),(1+event.y/10.0)*zoom.getB()])
 
             if(event.type==pygame.KEYDOWN):
                 if(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
