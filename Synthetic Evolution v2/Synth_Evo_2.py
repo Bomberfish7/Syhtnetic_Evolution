@@ -764,6 +764,8 @@ def GenerateChunk(chunkX, chunkY, noise_values):
     global Entities
     global Terrain
     tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
+    chunk_tile_types=[[1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<-0.125 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
+    print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in chunk_tile_types]))
     for x in range(chunk_size):
         for y in range(chunk_size):
             noise_X = chunkX*chunk_size+x
@@ -783,7 +785,7 @@ def MapGenerator():
     if(Globals.devtest_mode or maps_generated==0):
         plt.imshow(noise_values, cmap='gray')
         plt.show()
-    tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
+##    tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
 
     for i in range(chunk_limit):
         for j in range(chunk_limit):
