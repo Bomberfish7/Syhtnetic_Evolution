@@ -19,6 +19,7 @@ temperature=75
 timescale=1
 light=100
 time=0
+sim_time=0
 day_length=100000
 day_percent=0.75
 cluster_classes=[FoodCluster,PlantCluster,MushroomCluster]

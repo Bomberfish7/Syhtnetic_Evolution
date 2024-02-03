@@ -19,12 +19,13 @@ from perlin_noise import PerlinNoise
 ##import matplotlib
 import matplotlib.pyplot as plt
 from types import SimpleNamespace
+import gc
 
 from Globals import *
 from Statics import *
 from Food_Types import *
 
-
+DEBUG_DISABLE_NOISEIMG=True
 
 
 #TO DO:
@@ -134,6 +135,49 @@ def TileUpdate():
 
     for i in Terrain:
         Entities[i].UpdateDimensions()
+        r = random.uniform(0,100)
+##        r=100
+        if(r < (0.01/ups)*Globals.timescale):
+            p = random.uniform(0,100)
+            x = random.uniform(-16,16)
+            y = random.uniform(-16,16)
+            if(Entities[i].tile==0):
+                if(p<40):
+                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,0)
+                    nf_UUID=newfood.UUID
+                    Entities[nf_UUID]=newfood
+                    Foods.append(nf_UUID)
+                    #grass
+                elif(p<70):
+                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,1)
+                    nf_UUID=newfood.UUID
+                    Entities[nf_UUID]=newfood
+                    Foods.append(nf_UUID)#bush
+                elif(p<75):
+                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,2)
+                    nf_UUID=newfood.UUID
+                    Entities[nf_UUID]=newfood
+                    Foods.append(nf_UUID)#tree
+                else:
+                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,5)
+                    nf_UUID=newfood.UUID
+                    Entities[nf_UUID]=newfood
+                    Foods.append(nf_UUID)#mushroom
+                    Entities[nf_UUID].GenerateAura()
+                    Entities[newfood.getAura().UUID]=newfood.getAura()
+                    Entities[nf_UUID].setAura(Entities[newfood.getAura().UUID])
+                    Auras.append(newfood.getAura().UUID)
+            else:
+                if(p<90):
+                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,3)
+                    nf_UUID=newfood.UUID
+                    Entities[nf_UUID]=newfood
+                    Foods.append(nf_UUID)#kelp
+                else:
+                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,9)
+                    nf_UUID=newfood.UUID
+                    Entities[nf_UUID]=newfood
+                    Foods.append(nf_UUID)#fish
 
     for i in test_terrain:
         i.UpdateDimensions()
@@ -552,6 +596,7 @@ def ClearRemoves():
                 Terrain.remove(key)
                 del Entities[key]
                 if(len(Terrain)==0):
+                    gc.collect()
                     MapGenerator()
                     break
 
@@ -770,7 +815,7 @@ def GenerateChunk(chunkX, chunkY, noise_values):
     global Terrain
     tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
     chunk_tile_types=[[1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<-0.125 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
-##    print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in chunk_tile_types]))
+    print('\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types]))
     for x in range(chunk_size):
         for y in range(chunk_size):
             noise_X = chunkX*chunk_size+x
@@ -785,6 +830,7 @@ def MapGenerator():
     global Entities
     global Terrain
     global maps_generated
+    global freeze_ups
     Terrain_Noise=PerlinNoise(octaves=3)
     Detail_Noise=PerlinNoise(octaves=6)
     noise_values=[[Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary]) for y in range(tile_boundary)] for x in range(tile_boundary)]
@@ -793,16 +839,16 @@ def MapGenerator():
 ##    for i in range(tile_boundary):
 ##        for j in range(tile_boundary):
 ##            noise_values[i][j]+=0.5*Detail_Noise([i/tile_boundary,j/tile_boundary])
-    if(Globals.devtest_mode or maps_generated==0):
+    if(not(DEBUG_DISABLE_NOISEIMG) and (Globals.devtest_mode or maps_generated==0)):
 ##        plt.figure(2)
         plt.imshow(noise_values, cmap='gray')
         plt.show()
 ##    tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
-##    print('=======================================================')
+    print('=======================================================')
     for i in range(chunk_limit):
         for j in range(chunk_limit):
             GenerateChunk(i,j,noise_values)
-##    print('=======================================================')
+    print('=======================================================')
 ##    for x in range(tile_boundary[0]):
 ##        for y in range(tile_boundary[1]):
 ##            tile_type=1 if(noise_values[x][y]<-0.125) else 0
@@ -811,6 +857,7 @@ def MapGenerator():
 ##            Terrain.append(newTile.UUID)
 ##            Entities[newTile.UUID].UpdateHitbox()
     maps_generated+=1
+    freeze_ups=1
 ##            if((x-tile_boundary[0]/2) % 1 != 0 or (y-tile_boundary[1]/2) % 1 != 0):
 ##                print(str(x-tile_boundary[0]/2)+" ",str(y-tile_boundary[1]/2))
 ##    print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in noise_values]))
@@ -926,8 +973,11 @@ MergeTiles()
 try:
     while running:
         time_delta=clock.tick(Globals.fps)/1000.0
-        vis_UPS[vis_UPS_counter]=time_delta
-        vis_UPS_counter=(vis_UPS_counter+1)%UPS_samples
+        if (freeze_ups==0):
+            vis_UPS[vis_UPS_counter]=time_delta
+            vis_UPS_counter=(vis_UPS_counter+1)%UPS_samples
+        elif (freeze_ups==1):
+            freeze_ups=False
         if Globals.devtest_mode:
 
             ups=1.0/(sum(vis_UPS)/UPS_samples)
@@ -943,8 +993,9 @@ try:
             food_type_label.set_text("Food: "+Globals.Base_Foods[Globals.devtest_foodspawn_type].getId()+food_multi_text)
             food_type_label.visible=1
 
-            time_format = "%.2f" if Globals.time/ups < 10000 else "%.2e"
-            time_label.set_text("Simulation Time: "+str(time_format % round(Globals.time/ups,2)))
+            Globals.sim_time += Globals.timescale/ups
+            time_format = "%.2f" if Globals.sim_time < 10000 else "%.2e"
+            time_label.set_text("Simulation Time: "+str(time_format % round(Globals.sim_time,2)))
             time_label.visible=1
 
             sim_clock_frac=(Globals.time%Globals.day_length)/Globals.day_length*24
@@ -1102,6 +1153,7 @@ try:
                 elif(event.key==pygame.K_SPACE):
                     if(Globals.key_ctrl and Globals.key_shift and Globals.key_alt):
                         if(len(Terrain)>0):
+                            freeze_ups=2
                             for i in Terrain:
                                 Entities[i]._remove=True
                         else:

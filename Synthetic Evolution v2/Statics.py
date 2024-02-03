@@ -431,6 +431,7 @@ time_delta=0
 UPS_samples=fps
 vis_UPS=[0]*UPS_samples
 vis_UPS_counter=0
+freeze_ups=0
 camera=Point(0,0)
 zoom=Point(1,1)
 
