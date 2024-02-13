@@ -880,6 +880,7 @@ def GenerateChunk(chunkX, chunkY, noise_values):
             check_H = 0
             while c_Y < chunk_size:
                 check_W = 0
+                c_X = x
                 while c_X < chunk_size:
                     if chunk_tile_types[c_X][c_Y] == tile_type:
                         check_W += 1
@@ -921,7 +922,7 @@ def MapGenerator():
     for i in range(chunk_limit):
         for j in range(chunk_limit):
             GenerateChunk(i,j,noise_values)
-    print('=======================================================')
+    print('======================================================='+str(len(Terrain)))
     maps_generated+=1
     freeze_ups=1
 
@@ -1252,7 +1253,7 @@ try:
         screen.fill(c_background)
 
         for i in Terrain:
-            pygame.draw.rect(screen,Entities[i].getColor(),Entities[i].getVisDim(),border_radius=0)
+            pygame.draw.rect(screen,Entities[i].getColor(),Entities[i].getVisDim(),width=0,border_radius=1)
 
 ##        for i in test_terrain:
 ##            pygame.draw.rect(screen,i.getColor(),i.getVisDim())
