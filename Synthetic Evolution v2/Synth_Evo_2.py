@@ -820,7 +820,7 @@ def FoodMove(key):
 
     Entities[key].Move()
 
-def MakeTile(gridX,gridY,color=c_water,obj_id="water",tile=1,gridW=1,gridH=1):
+def MakeTile(gridX,gridY,color=c_water,obj_id="water",tile=1):
     newTile=Tile(pos=Point(tile_size*gridX,tile_size*gridY),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
     return newTile
 
@@ -853,8 +853,6 @@ def GenerateChunk(chunkX, chunkY, noise_values):
                 while c_X < chunk_size:
                     if chunk_tile_types[c_X][c_Y] == tile_type:
                         check_W += 1
-##                        chunk_tile_types[c_X][c_Y] = 2
-##                        chunk_tile_types[c_X][c_Y] *= -1
                     else:
                         break
                     c_X += 1
@@ -870,10 +868,6 @@ def GenerateChunk(chunkX, chunkY, noise_values):
                 for clearX in range(block_W):
                     chunk_tile_types[x+clearX][y+clearY] = 2
 ##            print(str(x)+","+str(y)+" "+str(block_W)+","+str(block_H))
-##            avg_X = np.average([x,x+block_W-1])
-##            avg_Y = np.average([y,y+block_H-1])
-##            print(str(avg_X)+" "+str(avg_Y))
-##            while chunk_tile_types[x:(block_W-1)]
             newTile=MakeRectTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,block_W,block_H,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
 ##            newTile=MakeTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
             Entities[newTile.UUID]=newTile
