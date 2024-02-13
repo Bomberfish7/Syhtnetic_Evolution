@@ -685,8 +685,10 @@ def FoodReproduce():
                 radius=random.uniform(16,48)*i.getSize()
                 direction=random.uniform(0,360)
                 pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
+                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+                    continue
                 spawn=True
-                for key2 in Entities:
+                for key2 in Foods:
                     j=Entities[key2]
                     if(PointInRect(Point(pos.getA(),pos.getB()-6),j.getDim())):
                         grass_r=random.uniform(0,100)
@@ -702,7 +704,8 @@ def FoodReproduce():
                 radius=random.uniform(32,80)*i.getSize()
                 direction=random.uniform(0,360)
                 pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
-
+                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+                    continue
                 newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.1,i)
                 Entities[newfood.UUID]=newfood
                 Foods.append(newfood.UUID)
@@ -714,7 +717,8 @@ def FoodReproduce():
                     radius=random.uniform(32,80)*(math.pow(3*i.getSize(),(1/3)))
                     direction=random.uniform(0,360)
                     pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
-
+                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+                        continue
                     new_fruit=CreateFood(pos,0,size,size*(i.getMaxEN()/i.getMaxSZ())*1,Base_Foods[4])
                     new_seed=Plant()
                     new_seed.setFoodCopy(i.getFoodCopy())
@@ -727,8 +731,10 @@ def FoodReproduce():
                 radius=random.uniform(16,32)*i.getSize()
                 direction=random.uniform(0,360)
                 pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
+                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+                    continue
                 spawn=True
-                for key2 in Entities:
+                for key2 in Foods:
                     j=Entities[key2]
                     if(PointInRect(Point(pos.getA(),pos.getB()-6),j.getDim())):
                         kelp_r=random.uniform(0,100)
@@ -744,6 +750,8 @@ def FoodReproduce():
                 radius=random.uniform(0,32)*i.getSize()
                 direction=random.uniform(0,360)
                 pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
+                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+                    continue
                 newfood=CreateFood(pos,0,size,i.getEnergy()+40*size,i.getSeed())
                 Entities[newfood.UUID]=newfood
                 Foods.append(newfood.UUID)
@@ -753,7 +761,8 @@ def FoodReproduce():
                 radius=random.uniform(16,100)*i.getSize()
                 direction=random.uniform(0,360)
                 pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
-
+                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+                    continue
                 newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.1,i)
                 Entities[newfood.UUID]=newfood
                 Entities[newfood.UUID].GenerateAura()
@@ -770,6 +779,8 @@ def FoodReproduce():
                     radius=random.uniform(0,48)*(math.pow(3*i.getSize(),(1/3)))
                     direction=random.uniform(0,360)
                     pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
+                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+                        continue
                     if f2==0:
                         newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.85,Base_Foods[8])
                         Entities[newfood.UUID]=newfood
@@ -790,7 +801,8 @@ def FoodReproduce():
                 for j in range(f):
                     size=random.uniform(0.2,0.3)
                     pos=Point(i.getPos().getA(),i.getPos().getB())
-
+                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+                        continue
                     newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.85,i)
                     Entities[newfood.UUID]=newfood
                     Foods.append(newfood.UUID)
@@ -800,7 +812,8 @@ def FoodReproduce():
                 for j in range(f):
                     size=random.uniform(0.2,0.3)
                     pos=Point(i.getPos().getA(),i.getPos().getB())
-
+                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+                        continue
                     newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.35,i)
                     Entities[newfood.UUID]=newfood
                     Foods.append(newfood.UUID)
