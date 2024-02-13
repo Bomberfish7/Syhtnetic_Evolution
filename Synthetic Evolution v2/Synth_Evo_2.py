@@ -485,7 +485,7 @@ def SAPCollison(a,check_list):
     global Entities
 
     for i in check_list:
-        if(type(Entities[a])==type(Entities[i])==Tile):
+        if(type(Entities[a])==Tile and type(Entities[i])==Tile):
             continue
         if(Entities[a].getDim().colliderect(Entities[i].getDim())):
             i_A=(type(Entities[i]) is Aura)
@@ -838,7 +838,7 @@ def GenerateChunk(chunkX, chunkY, noise_values):
     print('\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types]))
     for y in range(chunk_size):
         for x in range(chunk_size):
-            if chunk_tile_types[x][y] == 2:
+            if chunk_tile_types[x][y] < 0:
                 continue
             noise_X = chunkX*chunk_size+x
             noise_Y = chunkY*chunk_size+y
@@ -866,7 +866,7 @@ def GenerateChunk(chunkX, chunkY, noise_values):
                 block_H = check_H
             for clearY in range(block_H):
                 for clearX in range(block_W):
-                    chunk_tile_types[x+clearX][y+clearY] = 2
+                    chunk_tile_types[x+clearX][y+clearY] = -1
 ##            print(str(x)+","+str(y)+" "+str(block_W)+","+str(block_H))
             newTile=MakeRectTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,block_W,block_H,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
 ##            newTile=MakeTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
@@ -1203,6 +1203,8 @@ try:
                         if(len(Terrain)>0):
                             freeze_ups=2
                             for i in Terrain:
+                                Entities[i]._remove=True
+                            for i in Foods:
                                 Entities[i]._remove=True
                         else:
                             MapGenerator()
