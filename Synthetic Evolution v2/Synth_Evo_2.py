@@ -345,9 +345,9 @@ def PointInPolygon(point,poly):
     temp = poly
     poly = [Point(p[0],p[1]) for p in poly]
     poly.append(Point(poly[0].getA(),poly[0].getB()))
-    pointLine = Line(point,Point(point.getA()+32*chunk_size,point.getB()))#-32*chunk_size))
+    pointLine = Line(point,Point(point.getA()+32*chunk_size,point.getB()))
     numIntersect = 0
-    for i in range(len(poly)-1):#polyLines:
+    for i in range(len(poly)-1):
         if(poly[i].getB() <= point.getB()):
             if(poly[i+1].getB() > point.getB()):
                 if(PointLeftInfLine(poly[i],poly[i+1],point) > 0):
@@ -357,20 +357,11 @@ def PointInPolygon(point,poly):
                 if(PointLeftInfLine(poly[i],poly[i+1],point) < 0):
                     numIntersect-=1
     return numIntersect!=0
-##
-##
-##
-##        if poly[i].getSlope() == 0:
-##            continue
-##        if(LineLineCollision(p.getA()[0],p.getA()[1],p.getB()[0],p.getB()[1],pointLine.getA()[0],pointLine.getA()[1],pointLine.getB()[0],pointLine.getB()[1])):
-##            numIntersect+=1 if p.getSlope() > 0 else -1
-##    print(numIntersect)
-##    return numIntersect%2==1
 
 def PointLeftInfLine(l0,l1,point):
-    #>0 point left of inf line along line
+    #>0 point left of inf line intersecting l0 and l1
     #=0 point on inf line
-    #<0 point right of inf line along line
+    #<0 point right of inf line intersecting l0 and l1
     return ( (l1.getA() - l0.getA()) * (point.getB() - l0.getB()) - (point.getA() - l0.getA()) * (l1.getB() - l0.getB()))
 
 
@@ -612,8 +603,6 @@ def ClearRemoves():
             if Entities[key]._remove==True:
                 if type(Entities[key]) in [Mushroom,MushroomCluster]:
                     Entities[key].aura._remove=True
-##                    Auras.remove(Entities[key].getAura().UUID)
-##                    del Entities[Entities[key].getAura().UUID]
                 Entities[key].getLabel().kill()
                 Foods.remove(key)
                 del Entities[key]
@@ -910,11 +899,6 @@ def MapGenerator():
     Terrain_Noise=PerlinNoise(octaves=3)
     Detail_Noise=PerlinNoise(octaves=6)
     noise_values=[[Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary]) for y in range(tile_boundary)] for x in range(tile_boundary)]
-##    plt.figure(1)
-##    plt.imshow(noise_values, cmap='gray')
-##    for i in range(tile_boundary):
-##        for j in range(tile_boundary):
-##            noise_values[i][j]+=0.5*Detail_Noise([i/tile_boundary,j/tile_boundary])
     if(not(DEBUG_DISABLE_NOISEIMG) and (Globals.devtest_mode or maps_generated==0)):
 ##        plt.figure(2)
         plt.imshow(noise_values, cmap='gray')
@@ -925,18 +909,8 @@ def MapGenerator():
         for j in range(chunk_limit):
             GenerateChunk(i,j,noise_values)
     print('=======================================================')
-##    for x in range(tile_boundary[0]):
-##        for y in range(tile_boundary[1]):
-##            tile_type=1 if(noise_values[x][y]<-0.125) else 0
-##            newTile=MakeTile(x-tile_boundary[0]/2,y-tile_boundary[1]/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
-##            Entities[newTile.UUID]=newTile
-##            Terrain.append(newTile.UUID)
-##            Entities[newTile.UUID].UpdateHitbox()
     maps_generated+=1
     freeze_ups=1
-##            if((x-tile_boundary[0]/2) % 1 != 0 or (y-tile_boundary[1]/2) % 1 != 0):
-##                print(str(x-tile_boundary[0]/2)+" ",str(y-tile_boundary[1]/2))
-##    print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in noise_values]))
 
 
 def SaveData():
