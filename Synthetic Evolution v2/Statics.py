@@ -470,6 +470,7 @@ c_fish=(25,25,40)
 c_water=(75,165,240)
 c_land=(73, 99, 15)
 c_testwater=(95,220,255)
+c_error=(200,50,50)
 
 font0=pygame.font.Font('freesansbold.ttf',16)
 font1=pygame.font.Font('freesansbold.ttf',8)

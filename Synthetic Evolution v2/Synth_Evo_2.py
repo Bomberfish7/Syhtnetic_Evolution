@@ -132,34 +132,47 @@ def TileUpdate():
     global test_terrain
     global Entities
     global Terrain
+    global Foods
+    global Auras
+
+    spawnchance = 0.1/(0.2*(len(Foods)+1))#original 0.01
 
     for i in Terrain:
         Entities[i].UpdateDimensions()
         r = random.uniform(0,100)
 ##        r=100
-        if(r < (0.01/ups)*Globals.timescale):
+##        i=Terrain[0]
+        if(r < (spawnchance/ups)*Globals.timescale):
             p = random.uniform(0,100)
-            x = random.uniform(-16,16)
-            y = random.uniform(-16,16)
+            tile_dim = Entities[i].getDim()
+            tile_x = tile_dim.x
+            tile_y = tile_dim.y
+            tile_w = tile_dim.w
+            tile_h = tile_dim.h
+
+            x = random.uniform(tile_x,tile_x+tile_w)#-16,16 offset original
+##            print(str(Entities[i].dimensions.x)+" "+str(Entities[i].dimensions.w))
+            y = random.uniform(tile_y,tile_y+tile_h)#-16,16 offset original
+##            print(str(Entities[i].dimensions.y)+" "+str(Entities[i].dimensions.h))
             if(Entities[i].tile==0):
-                if(p<40):
-                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,0)
+                if(p<50):
+                    newfood=CreateBaseFood(Point(x,y),0,1,0)
                     nf_UUID=newfood.UUID
                     Entities[nf_UUID]=newfood
                     Foods.append(nf_UUID)
                     #grass
-                elif(p<70):
-                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,1)
+                elif(p<85):
+                    newfood=CreateBaseFood(Point(x,y),0,1,1)
                     nf_UUID=newfood.UUID
                     Entities[nf_UUID]=newfood
                     Foods.append(nf_UUID)#bush
-                elif(p<75):
-                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,2)
+                elif(p<90):
+                    newfood=CreateBaseFood(Point(x,y),0,1,2)
                     nf_UUID=newfood.UUID
                     Entities[nf_UUID]=newfood
                     Foods.append(nf_UUID)#tree
                 else:
-                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,5)
+                    newfood=CreateBaseFood(Point(x,y),0,1,5)
                     nf_UUID=newfood.UUID
                     Entities[nf_UUID]=newfood
                     Foods.append(nf_UUID)#mushroom
@@ -168,13 +181,13 @@ def TileUpdate():
                     Entities[nf_UUID].setAura(Entities[newfood.getAura().UUID])
                     Auras.append(newfood.getAura().UUID)
             else:
-                if(p<90):
-                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,3)
+                if(p<95):
+                    newfood=CreateBaseFood(Point(x,y),0,1,3)
                     nf_UUID=newfood.UUID
                     Entities[nf_UUID]=newfood
                     Foods.append(nf_UUID)#kelp
                 else:
-                    newfood=CreateBaseFood(Point(Entities[i].getPos().getA()+x,Entities[i].getPos().getB()+y),0,1,9)
+                    newfood=CreateBaseFood(Point(x,y),0,1,9)
                     nf_UUID=newfood.UUID
                     Entities[nf_UUID]=newfood
                     Foods.append(nf_UUID)#fish
@@ -570,8 +583,9 @@ def ClearRemoves():
         if key in Entities:
             if Entities[key]._remove==True:
                 if type(Entities[key]) in [Mushroom,MushroomCluster]:
-                    Auras.remove(Entities[key].getAura().UUID)
-                    del Entities[Entities[key].getAura().UUID]
+                    Entities[key].aura._remove=True
+##                    Auras.remove(Entities[key].getAura().UUID)
+##                    del Entities[Entities[key].getAura().UUID]
                 Entities[key].getLabel().kill()
                 Foods.remove(key)
                 del Entities[key]
@@ -806,22 +820,62 @@ def FoodMove(key):
 
     Entities[key].Move()
 
-def MakeTile(gridX,gridY,color=c_water,obj_id="water",tile=1):
+def MakeTile(gridX,gridY,color=c_water,obj_id="water",tile=1,gridW=1,gridH=1):
     newTile=Tile(pos=Point(tile_size*gridX,tile_size*gridY),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
+    return newTile
+
+def MakeRectTile(gridX,gridY,gridW=1,gridH=1,color=c_water,obj_id="water",tile=1):
+    y_offset = gridH*2*tile_offset-tile_offset
+    x_offset = gridW*2*tile_offset-tile_offset
+    newTile=Tile(pos=Point(tile_size*gridX,tile_size*gridY),shape=[Point(x_offset,y_offset),Point(-tile_offset,y_offset),Point(-tile_offset,-tile_offset),Point(x_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
     return newTile
 
 def GenerateChunk(chunkX, chunkY, noise_values):
     global Entities
     global Terrain
-    tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
+    tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water"),SimpleNamespace(color=c_error,obj_id="error")]
     chunk_tile_types=[[1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<-0.125 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
     print('\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types]))
-    for x in range(chunk_size):
-        for y in range(chunk_size):
+    for y in range(chunk_size):
+        for x in range(chunk_size):
+            if chunk_tile_types[x][y] == 2:
+                continue
             noise_X = chunkX*chunk_size+x
             noise_Y = chunkY*chunk_size+y
             tile_type=chunk_tile_types[x][y]
-            newTile=MakeTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
+            block_W = 1
+            block_H = 1
+            c_X = x
+            c_Y = y
+            check_H = 0
+            while c_Y < chunk_size:
+                check_W = 0
+                while c_X < chunk_size:
+                    if chunk_tile_types[c_X][c_Y] == tile_type:
+                        check_W += 1
+##                        chunk_tile_types[c_X][c_Y] = 2
+##                        chunk_tile_types[c_X][c_Y] *= -1
+                    else:
+                        break
+                    c_X += 1
+                if c_Y == y:
+                    block_W = check_W
+                elif check_W < block_W:
+                    break
+                c_Y += 1
+                check_H +=1
+            if check_H > block_H:
+                block_H = check_H
+            for clearY in range(block_H):
+                for clearX in range(block_W):
+                    chunk_tile_types[x+clearX][y+clearY] = 2
+##            print(str(x)+","+str(y)+" "+str(block_W)+","+str(block_H))
+##            avg_X = np.average([x,x+block_W-1])
+##            avg_Y = np.average([y,y+block_H-1])
+##            print(str(avg_X)+" "+str(avg_Y))
+##            while chunk_tile_types[x:(block_W-1)]
+            newTile=MakeRectTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,block_W,block_H,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
+##            newTile=MakeTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
             Entities[newTile.UUID]=newTile
             Terrain.append(newTile.UUID)
             Entities[newTile.UUID].UpdateHitbox()
