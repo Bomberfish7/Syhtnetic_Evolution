@@ -342,8 +342,25 @@ def PointInCircle(point,circle):
 
 def PointInPolygon(point,poly):
     #Finds if a point is inside a polygon
-    pass
-#^^  Unfinished  ^^
+    ##TODO: UPDATE TO WORK WITH NON-SIMPLE POLYGONS TOO (WINDING NUMBER ALGORITHM, ETC)
+    polyLines = PolyToLine(poly)
+    pointLine = Line(point,Point(point.getA()-32*chunk_size,point.getB()-32*chunk_size))
+    numIntersect = 0
+    for p in polyLines:
+##        if p.getSlope() == 0:
+##            continue
+        if(LineLineCollision(p.getA()[0],p.getA()[1],p.getB()[0],p.getB()[1],pointLine.getA()[0],pointLine.getA()[1],pointLine.getB()[0],pointLine.getB()[1])):
+            numIntersect+=1
+            # if p.getSlope() > 0 else -1
+    print(numIntersect)
+    return numIntersect%2==1
+
+def PointLeftInfLine(line,point):
+    #>0 point left of inf line along line
+    #=0 point on inf line
+    #<0 point right of inf line along line
+    return ( (line.getB()[0] - line.getA()[0]) * (point.getB() - line.getA()[1]) - (point.getA() - line.getA()[0]) * (line.getB()[1] - line.getA()[1]))
+
 
 def CollisionHandler():
     #Handles collision between all objects
@@ -361,7 +378,6 @@ def PolyToLine(poly):
     lines=[]
     poly_len=len(poly)
 ##    print([str(i) for i in poly])
-
     for i in range(poly_len):
         lines.append(Line(Point(poly[i][0],poly[i][1]),Point(poly[(i+1)%poly_len][0],poly[(i+1)%poly_len][1])))
 
@@ -493,7 +509,7 @@ def SAPCollison(a,check_list):
             if((not i_A and a_A) or (i_A and not a_A)):
                 SAPCollide(a,i)
             elif(not i_A and not a_A):
-                if PolyPolyCollison(Entities[a].getHitbox(),Entities[i].getHitbox()):
+                if PointInPolygon(Entities[a].getPos(),Entities[i].getHitbox()) or PolyPolyCollison(Entities[a].getHitbox(),Entities[i].getHitbox()):
                     SAPCollide(a,i)
 
 def SAPCollide(a,b):

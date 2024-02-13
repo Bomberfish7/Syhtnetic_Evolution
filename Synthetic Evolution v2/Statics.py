@@ -41,23 +41,39 @@ class Line:
     def __init__(self,a=Point(),b=Point()):
         self.a=a
         self.b=b
+        self.calcSlope()#(self.b.getB()-self.a.getB())/(self.b.getA()-self.a.getA())
     def __str__(self):
-        return f'[{self.a} , {self.b}]'
+        return f'[{self.a} , {self.b}], slope: {self.slope}'
 
     def getA(self):
         return self.a.getPoint()
     def getB(self):
         return self.b.getPoint()
     def getLine(self):
-        return [self.a.getPoint(),self.b.getPoint()]
+        return [self.a.getPoint(),self.b.getPoint(),self.slope]
+    def getSlope(self):
+        return self.slope
 
     def setA(self,a):
         self.a=a.setPoint()
+        self.calcSlope()
     def setB(self,b):
         self.b=b.setPoint()
+        self.calcSlope()
     def setLine(self,line):
         self.a=line[0].getPoint()
         self.b=line[1].getPoint()
+        self.slope=line[2]
+
+    def calcSlope(self):
+        x_comp = (self.b.getA()-self.a.getA())
+        y_comp = (self.b.getB()-self.a.getB())
+        if x_comp != 0:
+            self.slope = y_comp/x_comp#(self.b.getA()-self.a.getA())
+        elif y_comp == 0:
+            self.slope = 0
+        else:
+            self.slope = float("inf") if y_comp > 0 else float("-inf")
 
 class Circle:
     #A simple 2D circle
