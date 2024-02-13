@@ -342,24 +342,36 @@ def PointInCircle(point,circle):
 
 def PointInPolygon(point,poly):
     #Finds if a point is inside a polygon
-    ##TODO: UPDATE TO WORK WITH NON-SIMPLE POLYGONS TOO (WINDING NUMBER ALGORITHM, ETC)
-    polyLines = PolyToLine(poly)
-    pointLine = Line(point,Point(point.getA()-32*chunk_size,point.getB()-32*chunk_size))
+    temp = poly
+    poly = [Point(p[0],p[1]) for p in poly]
+    poly.append(Point(poly[0].getA(),poly[0].getB()))
+    pointLine = Line(point,Point(point.getA()+32*chunk_size,point.getB()))#-32*chunk_size))
     numIntersect = 0
-    for p in polyLines:
-##        if p.getSlope() == 0:
+    for i in range(len(poly)-1):#polyLines:
+        if(poly[i].getB() <= point.getB()):
+            if(poly[i+1].getB() > point.getB()):
+                if(PointLeftInfLine(poly[i],poly[i+1],point) > 0):
+                    numIntersect+=1
+        else:
+            if(poly[i+1].getB() <= point.getB()):
+                if(PointLeftInfLine(poly[i],poly[i+1],point) < 0):
+                    numIntersect-=1
+    return numIntersect!=0
+##
+##
+##
+##        if poly[i].getSlope() == 0:
 ##            continue
-        if(LineLineCollision(p.getA()[0],p.getA()[1],p.getB()[0],p.getB()[1],pointLine.getA()[0],pointLine.getA()[1],pointLine.getB()[0],pointLine.getB()[1])):
-            numIntersect+=1
-            # if p.getSlope() > 0 else -1
-    print(numIntersect)
-    return numIntersect%2==1
+##        if(LineLineCollision(p.getA()[0],p.getA()[1],p.getB()[0],p.getB()[1],pointLine.getA()[0],pointLine.getA()[1],pointLine.getB()[0],pointLine.getB()[1])):
+##            numIntersect+=1 if p.getSlope() > 0 else -1
+##    print(numIntersect)
+##    return numIntersect%2==1
 
-def PointLeftInfLine(line,point):
+def PointLeftInfLine(l0,l1,point):
     #>0 point left of inf line along line
     #=0 point on inf line
     #<0 point right of inf line along line
-    return ( (line.getB()[0] - line.getA()[0]) * (point.getB() - line.getA()[1]) - (point.getA() - line.getA()[0]) * (line.getB()[1] - line.getA()[1]))
+    return ( (l1.getA() - l0.getA()) * (point.getB() - l0.getB()) - (point.getA() - l0.getA()) * (l1.getB() - l0.getB()))
 
 
 def CollisionHandler():
