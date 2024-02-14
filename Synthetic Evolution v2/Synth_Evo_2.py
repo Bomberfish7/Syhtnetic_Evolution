@@ -263,24 +263,38 @@ def FoodInWater():
     #Hurts foods outside of their correct area
     global Foods
     global test_terrain
+    global Terrain
 
     for i in Foods:
+        food_aquatic = Entities[i].getAquatic()
         if(Entities[i].getAquatic()==0):
             drowning=False
         elif(Entities[i].getAquatic()==1):
             drowning=True
         else:
             drowning=False
-        for j in test_terrain:
-            if(Entities[i].getAquatic()==0):
-                if(PointInRect(Entities[i].getPos(),j.getDim())):
-                    drowning=True
-            elif(Entities[i].getAquatic()==1):
-                if(PointInRect(Entities[i].getPos(),j.getDim())):
+        aquatic_diff=0
+        dmg_scale = 0.15
+        for j in Terrain:
+            terrainType = Entities[j].tile
+            aquatic_diff = abs(terrainType-food_aquatic)
+            if(PointInRect(Entities[i].getPos(),Entities[j].getDim())):
+                if aquatic_diff<=0.15:
                     drowning=False
+                else:
+                    drowning=True
+                    dmg_scale = (((aquatic_diff-0.15))*(17.0/14.0))+0.163
+
+
+##            if(Entities[i].getAquatic()==0):
+##                if(PointInRect(Entities[i].getPos(),Entities[j].getDim())):
+##                    drowning=True
+##            elif(Entities[i].getAquatic()==1):
+##                if(PointInRect(Entities[i].getPos(),Entities[j].getDim())):
+##                    drowning=False
 
         if(drowning):
-            Entities[i].Drown()
+            Entities[i].Drown(damage_mult=dmg_scale)
 
 def FoodUpdate():
     #Updates various functions for all foods
@@ -1023,6 +1037,9 @@ test_terrain.append(MakeTile(0,0,color=c_testwater))
 MergeTiles()
 
 try:
+
+
+
     while running:
         time_delta=clock.tick(Globals.fps)/1000.0
         if (freeze_ups==0):

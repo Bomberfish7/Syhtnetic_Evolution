@@ -98,7 +98,7 @@ class Food(Object):
                 self.health-=(self.max_health*self.size/20)/ups*Globals.timescale
             else:
                 self.health-=(np.clip((self.energy/self.max_energy*self.size)-0.1,0.-1,0.0)/-0.02)/ups*Globals.timescale
-    def Drown(self):
+    def Drown(self,damage_mult=1):
         self.health-=(self.max_health*self.size/40)/ups*Globals.timescale
 
 class Plant(Food):
@@ -201,6 +201,7 @@ class PreyFood(Food):
         self.eat_timer=0
         self.memory=list()
         self.target=Point(0,0)
+        self.digestion_discount = 1
     def __str__(self):
         return f'PreyFood:\"{self.obj_id}\"\t [Health:{self.health}, Energy:{self.energy}, Regen:{self.energy_regen}, Age:{self.age}, Poison:{self.poison}, Aquatic:{self.aquatic}, UUID:{self.UUID}]'
 
@@ -286,7 +287,11 @@ class PreyFood(Food):
         self.pos.setPoint([self.pos.getA()+self.dx,self.pos.getB()+self.dy])
         self.move_timer-=1/ups*Globals.timescale
         self.eat_timer-=1/ups*Globals.timescale
-        self.energy-=(0.075+(0.01*math.sqrt(self.dx**2+self.dy**2)))/ups*Globals.timescale
+        if self.eat_timer > 0:
+            self.digestion_discount = 2
+        else:
+            self.digestion_discount = 1
+        self.energy-=((0.075+(0.01*math.sqrt(self.dx**2+self.dy**2)))/self.digestion_discount)/ups*Globals.timescale
 
 class Egg(Food):
     #Food that holds Creature data
