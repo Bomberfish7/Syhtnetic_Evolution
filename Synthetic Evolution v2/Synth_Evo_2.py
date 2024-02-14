@@ -154,43 +154,30 @@ def TileUpdate():
 ##            print(str(Entities[i].dimensions.x)+" "+str(Entities[i].dimensions.w))
             y = random.uniform(tile_y,tile_y+tile_h)#-16,16 offset original
 ##            print(str(Entities[i].dimensions.y)+" "+str(Entities[i].dimensions.h))
+            food_type=0
             if(Entities[i].tile==0):
                 if(p<50):
-                    newfood=CreateBaseFood(Point(x,y),0,1,0)
-                    nf_UUID=newfood.UUID
-                    Entities[nf_UUID]=newfood
-                    Foods.append(nf_UUID)
-                    #grass
+                    food_type=0#grass
                 elif(p<85):
-                    newfood=CreateBaseFood(Point(x,y),0,1,1)
-                    nf_UUID=newfood.UUID
-                    Entities[nf_UUID]=newfood
-                    Foods.append(nf_UUID)#bush
+                    food_type=1#bush
                 elif(p<90):
-                    newfood=CreateBaseFood(Point(x,y),0,1,2)
-                    nf_UUID=newfood.UUID
-                    Entities[nf_UUID]=newfood
-                    Foods.append(nf_UUID)#tree
+                    food_type=2#tree
                 else:
-                    newfood=CreateBaseFood(Point(x,y),0,1,5)
-                    nf_UUID=newfood.UUID
-                    Entities[nf_UUID]=newfood
-                    Foods.append(nf_UUID)#mushroom
-                    Entities[nf_UUID].GenerateAura()
-                    Entities[newfood.getAura().UUID]=newfood.getAura()
-                    Entities[nf_UUID].setAura(Entities[newfood.getAura().UUID])
-                    Auras.append(newfood.getAura().UUID)
+                    food_type=5#mushroom
             else:
                 if(p<95):
-                    newfood=CreateBaseFood(Point(x,y),0,1,3)
-                    nf_UUID=newfood.UUID
-                    Entities[nf_UUID]=newfood
-                    Foods.append(nf_UUID)#kelp
+                    food_type=3#kelp
                 else:
-                    newfood=CreateBaseFood(Point(x,y),0,1,9)
-                    nf_UUID=newfood.UUID
-                    Entities[nf_UUID]=newfood
-                    Foods.append(nf_UUID)#fish
+                    food_type=9#fish
+            newfood=CreateBaseFood(Point(x,y),0,1,food_type)
+            nf_UUID=newfood.UUID
+            Entities[nf_UUID]=newfood
+            Foods.append(nf_UUID)
+            if food_type==5:
+                Entities[nf_UUID].GenerateAura()
+                Entities[newfood.getAura().UUID]=newfood.getAura()
+                Entities[nf_UUID].setAura(Entities[newfood.getAura().UUID])
+                Auras.append(newfood.getAura().UUID)
 
     for i in test_terrain:
         i.UpdateDimensions()
@@ -826,6 +813,7 @@ def FoodMove(key):
 
     global Entities
     global test_terrain
+    global Terrain
 
     target=None
 
@@ -837,8 +825,8 @@ def FoodMove(key):
             target=Point(Entities[key].getPos().getA()+random.uniform(-64,64),Entities[key].getPos().getB()+random.uniform(-64,64))
         if Entities[key].getAquatic()==1:
             t=False
-            for i in test_terrain:
-                if PointInRect(target,i.getDim()):
+            for i in Terrain:
+                if PointInRect(target,Entities[i].getDim()):
                     t=True
             if not t:
                 target=Point(Entities[key].getPos().getA(),Entities[key].getPos().getB())
