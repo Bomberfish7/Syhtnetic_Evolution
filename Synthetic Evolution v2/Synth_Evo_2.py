@@ -270,13 +270,10 @@ def FoodInWater():
         food_grid=[round(food_pos.getA()/float(tile_size)),round(food_pos.getB()/float(tile_size))]
         food_aquatic = Entities[i].getAquatic()
         drowning=False
-        aquatic_diff=0
         dmg_scale = 0.15
         terrainType = terrain_type_map[food_grid[0]+int(tile_boundary/2)][food_grid[1]+int(tile_boundary/2)]
         aquatic_diff = abs(terrainType-food_aquatic)
-        if aquatic_diff<=0.15:
-            drowning=False
-        else:
+        if aquatic_diff>0.15:
             drowning=True
             dmg_scale = (((aquatic_diff-0.15))*(17.0/14.0))+0.163
 
