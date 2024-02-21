@@ -266,32 +266,19 @@ def FoodInWater():
     global Terrain
 
     for i in Foods:
+        food_pos=Entities[i].getPos()
+        food_grid=[round(food_pos.getA()/float(tile_size)),round(food_pos.getB()/float(tile_size))]
         food_aquatic = Entities[i].getAquatic()
-        if(Entities[i].getAquatic()==0):
-            drowning=False
-        elif(Entities[i].getAquatic()==1):
-            drowning=True
-        else:
-            drowning=False
+        drowning=False
         aquatic_diff=0
         dmg_scale = 0.15
-        for j in Terrain:
-            terrainType = Entities[j].tile
-            aquatic_diff = abs(terrainType-food_aquatic)
-            if(PointInRect(Entities[i].getPos(),Entities[j].getDim())):
-                if aquatic_diff<=0.15:
-                    drowning=False
-                else:
-                    drowning=True
-                    dmg_scale = (((aquatic_diff-0.15))*(17.0/14.0))+0.163
-
-
-##            if(Entities[i].getAquatic()==0):
-##                if(PointInRect(Entities[i].getPos(),Entities[j].getDim())):
-##                    drowning=True
-##            elif(Entities[i].getAquatic()==1):
-##                if(PointInRect(Entities[i].getPos(),Entities[j].getDim())):
-##                    drowning=False
+        terrainType = terrain_type_map[food_grid[0]+int(tile_boundary/2)][food_grid[1]+int(tile_boundary/2)]
+        aquatic_diff = abs(terrainType-food_aquatic)
+        if aquatic_diff<=0.15:
+            drowning=False
+        else:
+            drowning=True
+            dmg_scale = (((aquatic_diff-0.15))*(17.0/14.0))+0.163
 
         if(drowning):
             Entities[i].Drown(damage_mult=dmg_scale)
@@ -912,9 +899,11 @@ def MapGenerator():
     global Terrain
     global maps_generated
     global freeze_ups
+    global terrain_type_map
     Terrain_Noise=PerlinNoise(octaves=3)
     Detail_Noise=PerlinNoise(octaves=6)
     noise_values=[[Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary]) for y in range(tile_boundary)] for x in range(tile_boundary)]
+    terrain_type_map=[[1 if noise_values[x][y]<-0.125 else 0 for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)]
     if(not(DEBUG_DISABLE_NOISEIMG) and (Globals.devtest_mode or maps_generated==0)):
 ##        plt.figure(2)
         plt.imshow(noise_values, cmap='gray')
@@ -996,6 +985,7 @@ Terrain_Noise=PerlinNoise(octaves=1)
 
 
 Terrain=[]
+terrain_type_map=[[]]
 Entities=dict()
 Foods=[]
 Auras=[]
@@ -1019,6 +1009,10 @@ sim_minute=int((sim_clock_frac-sim_hour)*60)
 clock_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(0,65,150,25),"Sim Clock: "+str("%02d" % sim_hour)+":"+str("%02d" % sim_minute),visible=0)
 light_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(150,65,200,25),"Light: "+str("%.2f" % round(Globals.light,2)),visible=0)
 
+##test_tile = Tile(pos=Point(0,0),shape=[Point(0,0),Point(tile_size,0),Point(tile_size,tile_size),Point(0,tile_size)],color=c_error,obj_id="Error",tile=2)
+##Entities[test_tile.UUID]=test_tile
+##Terrain.append(test_tile.UUID)
+##Entities[test_tile.UUID].UpdateHitbox()
 
 test_terrain=[]
 for j in range(3,6):
@@ -1258,7 +1252,7 @@ try:
         screen.fill(c_background)
 
         for i in Terrain:
-            pygame.draw.rect(screen,Entities[i].getColor(),Entities[i].getVisDim(),width=0,border_radius=1)
+            pygame.draw.rect(screen,Entities[i].getColor(),Entities[i].getVisDim(),width=1,border_radius=1)
 
 ##        for i in test_terrain:
 ##            pygame.draw.rect(screen,i.getColor(),i.getVisDim())
