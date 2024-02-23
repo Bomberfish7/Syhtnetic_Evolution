@@ -202,6 +202,7 @@ class PreyFood(Food):
         self.memory=list()
         self.target=Point(0,0)
         self.digestion_discount = 1
+        self.digestion_time=0
     def __str__(self):
         return f'PreyFood:\"{self.obj_id}\"\t [Health:{self.health}, Energy:{self.energy}, Regen:{self.energy_regen}, Age:{self.age}, Poison:{self.poison}, Aquatic:{self.aquatic}, UUID:{self.UUID}]'
 
@@ -209,6 +210,8 @@ class PreyFood(Food):
         return self.move_timer
     def getEatT(self):
         return self.eat_timer
+    def getDigestT(self):
+        return self.digestion_time
     def getDx(self):
         return self.dx
     def getDy(self):
@@ -233,12 +236,21 @@ class PreyFood(Food):
         self.move_timer=move_timer
     def setEatT(self,eat_timer):
         self.eat_timer=eat_timer
+    def setDigestT(self,digestion_time):
+        self.digestion_time=digestion_time
     def setDx(self,dx):
         self.dx=dx
     def setDy(self,dy):
         self.dy=dy
     def setTarget(self,target):
         self.target.setPoint([target.getA(),target.getB()])
+
+    def incMoveT(self,move_timer):
+        self.move_timer+=move_timer
+    def incEatT(self,eat_timer):
+        self.eat_timer+=eat_timer
+    def incDigestT(self,digestion_time):
+        self.digestion_time+=digestion_time
     def addMemory(self,pos):
         for i in self.memory:
             if abs(i.getA()-pos.getA())<=7 and abs(i.getB()-pos.getB())<=7:
@@ -281,16 +293,20 @@ class PreyFood(Food):
         if magnitude>20:
             self.dx=(tdx/magnitude)*20/ups*Globals.timescale
             self.dy=(tdy/magnitude)*20/ups*Globals.timescale
+##            print(str(self.dx)+", "+str(self.dy)+" | "+str(magnitude)+" | "+str((tdx/magnitude)*20/ups)+", "+str((tdy/magnitude)*20/ups))
         else:
             self.dx=tdx/ups*Globals.timescale
             self.dy=tdy/ups*Globals.timescale
         self.pos.setPoint([self.pos.getA()+self.dx,self.pos.getB()+self.dy])
-        self.move_timer-=1/ups*Globals.timescale
-        self.eat_timer-=1/ups*Globals.timescale
-        if self.eat_timer > 0:
+        if self.digestion_time > 0:
             self.digestion_discount = 2
         else:
             self.digestion_discount = 1
+        self.move_timer-=1/ups*Globals.timescale
+        self.eat_timer-=1/ups*Globals.timescale
+        if(self.digestion_time>0):
+            self.digestion_time-=min(1/ups*Globals.timescale,self.digestion_time)
+
         self.energy-=((0.075+(0.01*math.sqrt(self.dx**2+self.dy**2)))/self.digestion_discount)/ups*Globals.timescale
 
 class Egg(Food):

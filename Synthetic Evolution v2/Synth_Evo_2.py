@@ -91,7 +91,7 @@ def CreateBaseFood(pos,angle,size,food_type):
         #Eggs
         new_food=Food()
     new_food.setFoodCopy(Base_Foods[food_type].getFoodCopy())
-    new_food.setPos(Point(pos.getA(),pos.getB()))
+    new_food.setPos(Point(np.clip(pos.getA(),-coord_limit,coord_limit-1),np.clip(pos.getB(),-coord_limit,coord_limit-1)))
     new_food.setShape(shapes[Base_Foods[food_type].getId()][0])
     new_food.setAngle(angle)
     new_food.setSize(size)
@@ -118,7 +118,7 @@ def CreateFood(pos,angle,size,energy,food):
         new_food=Food()
 
     new_food.setFoodCopy(food.getFoodCopy())
-    new_food.setPos(Point(pos.getA(),pos.getB()))
+    new_food.setPos(Point(np.clip(pos.getA(),-coord_limit,coord_limit-1),np.clip(pos.getB(),-coord_limit,coord_limit-1)))
     new_food.setShape(shapes[food.getId()][0])
     new_food.setAngle(angle)
     new_food.setSize(size)
@@ -267,10 +267,11 @@ def FoodInWater():
 
     for i in Foods:
         food_pos=Entities[i].getPos()
-        food_grid=[round(food_pos.getA()/float(tile_size)),round(food_pos.getB()/float(tile_size))]
+        food_grid=[math.floor(food_pos.getA()/float(tile_size)),math.floor(food_pos.getB()/float(tile_size))]
         food_aquatic = Entities[i].getAquatic()
         drowning=False
         dmg_scale = 0.15
+##        print(str(food_grid[0])+", "+str(food_grid[1])+" "+str(food_grid[0]+int(tile_boundary/2))+", "+str(food_grid[1]+int(tile_boundary/2)))
         terrainType = terrain_type_map[food_grid[0]+int(tile_boundary/2)][food_grid[1]+int(tile_boundary/2)]
         aquatic_diff = abs(terrainType-food_aquatic)
         if aquatic_diff>0.15:
@@ -543,6 +544,7 @@ def SAPCollide(a,b):
                         r=Entities[b].getEnergy()
                     Entities[a].setEnergy(Entities[a].getEnergy()+r)
                     Entities[a].setEatT(1.5)
+                    Entities[a].setDigestT(1.5)
                     Entities[a].setMoveT(Entities[a].getMoveT()*0.25)
                     Entities[b].setEnergy(Entities[b].getEnergy()-r)
         elif(type(Entities[a]) in [Food,FoodCluster,Fruit,Plant,PlantCluster,Mushroom,MushroomCluster] and type(Entities[b]) in [PreyFood]):
@@ -557,6 +559,7 @@ def SAPCollide(a,b):
                         r=Entities[a].getEnergy()
                     Entities[b].setEnergy(Entities[b].getEnergy()+r)
                     Entities[b].setEatT(1.5)
+                    Entities[b].setDigestT(1.5)
                     Entities[b].setMoveT(Entities[b].getMoveT()*0.25)
                     Entities[a].setEnergy(Entities[a].getEnergy()-r)
 
@@ -670,8 +673,8 @@ def FoodReproduce():
                 radius=random.uniform(16,48)*i.getSize()
                 direction=random.uniform(0,360)
                 pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
-                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
-                    continue
+##                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+##                    continue
                 spawn=True
                 for key2 in Foods:
                     j=Entities[key2]
@@ -689,8 +692,8 @@ def FoodReproduce():
                 radius=random.uniform(32,80)*i.getSize()
                 direction=random.uniform(0,360)
                 pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
-                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
-                    continue
+##                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+##                    continue
                 newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.1,i)
                 Entities[newfood.UUID]=newfood
                 Foods.append(newfood.UUID)
@@ -702,8 +705,8 @@ def FoodReproduce():
                     radius=random.uniform(32,80)*(math.pow(3*i.getSize(),(1/3)))
                     direction=random.uniform(0,360)
                     pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
-                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
-                        continue
+##                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+##                        continue
                     new_fruit=CreateFood(pos,0,size,size*(i.getMaxEN()/i.getMaxSZ())*1,Base_Foods[4])
                     new_seed=Plant()
                     new_seed.setFoodCopy(i.getFoodCopy())
@@ -716,8 +719,8 @@ def FoodReproduce():
                 radius=random.uniform(16,32)*i.getSize()
                 direction=random.uniform(0,360)
                 pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
-                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
-                    continue
+##                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+##                    continue
                 spawn=True
                 for key2 in Foods:
                     j=Entities[key2]
@@ -735,8 +738,8 @@ def FoodReproduce():
                 radius=random.uniform(0,32)*i.getSize()
                 direction=random.uniform(0,360)
                 pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
-                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
-                    continue
+##                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+##                    continue
                 newfood=CreateFood(pos,0,size,i.getEnergy()+40*size,i.getSeed())
                 Entities[newfood.UUID]=newfood
                 Foods.append(newfood.UUID)
@@ -746,8 +749,8 @@ def FoodReproduce():
                 radius=random.uniform(16,100)*i.getSize()
                 direction=random.uniform(0,360)
                 pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
-                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
-                    continue
+##                if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+##                    continue
                 newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.1,i)
                 Entities[newfood.UUID]=newfood
                 Entities[newfood.UUID].GenerateAura()
@@ -764,8 +767,8 @@ def FoodReproduce():
                     radius=random.uniform(0,48)*(math.pow(3*i.getSize(),(1/3)))
                     direction=random.uniform(0,360)
                     pos=Point(i.getPos().getA()+radius*math.cos(math.radians(direction)),i.getPos().getB()+radius*math.sin(math.radians(direction)))
-                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
-                        continue
+##                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+##                        continue
                     if f2==0:
                         newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.85,Base_Foods[8])
                         Entities[newfood.UUID]=newfood
@@ -786,8 +789,8 @@ def FoodReproduce():
                 for j in range(f):
                     size=random.uniform(0.2,0.3)
                     pos=Point(i.getPos().getA(),i.getPos().getB())
-                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
-                        continue
+##                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+##                        continue
                     newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.85,i)
                     Entities[newfood.UUID]=newfood
                     Foods.append(newfood.UUID)
@@ -797,8 +800,8 @@ def FoodReproduce():
                 for j in range(f):
                     size=random.uniform(0.2,0.3)
                     pos=Point(i.getPos().getA(),i.getPos().getB())
-                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
-                        continue
+##                    if -coord_limit>pos.getA() or coord_limit<pos.getA() or -coord_limit>pos.getB() or coord_limit<pos.getB():
+##                        continue
                     newfood=CreateFood(pos,0,size,size*i.getMaxEN()*0.35,i)
                     Entities[newfood.UUID]=newfood
                     Foods.append(newfood.UUID)
@@ -828,6 +831,7 @@ def FoodMove(key):
                     t=True
             if not t:
                 target=Point(Entities[key].getPos().getA(),Entities[key].getPos().getB())
+        target=Point(np.clip(target.getA(),-coord_limit,coord_limit-1),np.clip(target.getB(),-coord_limit,coord_limit-1))
         Entities[key].setTarget(target)
         Entities[key].setMoveT(random.uniform(5,15))
 
@@ -837,13 +841,13 @@ def FoodMove(key):
     Entities[key].Move()
 
 def MakeTile(gridX,gridY,color=c_water,obj_id="water",tile=1):
-    newTile=Tile(pos=Point(tile_size*gridX,tile_size*gridY),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
+    newTile=Tile(pos=Point(tile_offset+tile_size*gridX,tile_offset+tile_size*gridY),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
     return newTile
 
 def MakeRectTile(gridX,gridY,gridW=1,gridH=1,color=c_water,obj_id="water",tile=1):
     y_offset = gridH*2*tile_offset-tile_offset
     x_offset = gridW*2*tile_offset-tile_offset
-    newTile=Tile(pos=Point(tile_size*gridX,tile_size*gridY),shape=[Point(x_offset,y_offset),Point(-tile_offset,y_offset),Point(-tile_offset,-tile_offset),Point(x_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
+    newTile=Tile(pos=Point(tile_offset+tile_size*gridX,tile_offset+tile_size*gridY),shape=[Point(x_offset,y_offset),Point(-tile_offset,y_offset),Point(-tile_offset,-tile_offset),Point(x_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
     return newTile
 
 def GenerateChunk(chunkX, chunkY, noise_values):
