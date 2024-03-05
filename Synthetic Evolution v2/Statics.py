@@ -316,26 +316,28 @@ class Object:
 
 class Tile(Object):
     #Any terrain object
-    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,immortal=True,tile=0):
+    def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,immortal=True,tile=0,area=0):
         super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,immortal)
         self.tile=tile
+        self.area=area
         self.ui_label.html_text="<p>Tile</p>"
         self.ui_label.visible=False
     def __str__(self):
-        return f'Tile:\"{self.obj_id}\"\t [Pos:{self.pos}, Speed:{self.delta}, Size:{(self.dimensions.w,self.dimensions.h)}, Tile Type:{self.tile}]'
+        return f'Tile:\"{self.obj_id}\"\t [Pos:{self.pos}, Speed:{self.delta}, Size:{(self.dimensions.w,self.dimensions.h)}, Tile Type:{self.tile}, Area:{self.area}]'
     def getObjStr(self):
         return super().__str__()
 
     def getTile(self):
         return self.tile
     def getTileCopy(self):
-        return [self.getObjectCopy(),self.tile]
+        return [self.getObjectCopy(),self.tile,self.area]
 
     def setTile(self,tile):
         self.tile=tile
     def setTileCopy(self,copy):
         self.setObjectCopy(copy[0])
         self.tile=copy[1]
+        self.area=copy[2]
     def generateLabel(self):
         pass
 
@@ -434,7 +436,7 @@ s_width=1024
 s_height=576
 tile_size=32
 tile_offset=tile_size/2
-chunk_size=16
+chunk_size=12
 chunk_limit=4
 ##tile_screens=1.5
 tile_boundary=int(chunk_size*chunk_limit)

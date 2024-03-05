@@ -15,9 +15,14 @@ import random
 import traceback
 import sys
 import json
+import time as sys_time
 from perlin_noise import PerlinNoise
 ##import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+from matplotlib.collections import PatchCollection
+from shapely.geometry import Polygon as Shapely_Polygon
+
 from types import SimpleNamespace
 import gc
 
@@ -840,6 +845,173 @@ def FoodMove(key):
 
     Entities[key].Move()
 
+def flood_fill(x,y,polygon,terrain):
+
+    directions=[(-1,0),(0,-1),(1,0),(0,1)]
+
+    polygon.append((x,y))
+
+    t=terrain[y][x]
+    terrain[y][x]=-1
+
+    for dx,dy in directions:
+        nx,ny=x+dx,y+dy
+        if 0<=ny<len(terrain) and 0<=nx<len(terrain[ny]) and terrain[ny][nx]==t:
+            flood_fill(nx,ny,polygon,terrain)
+
+def create_corners(polygon):
+
+    corners=[]
+
+    directions=[(0,0),(0,1),(1,1),(1,0)]
+
+    for x,y in polygon:
+        for dx,dy in directions:
+            nx,ny=x+dx,y+dy
+            if (nx,ny) not in corners:
+                corners.append((nx,ny))
+
+    return corners
+
+def sort_points(polygon):
+
+    sorted_points=[]
+
+    for point in polygon:
+        if not check_if_interior_point(polygon,point):
+            sorted_points.append(point)
+
+    sorted_polygon=sorted(sorted_points, key=lambda p:(p[1],p[0]))
+
+    closed_polygon=build_edges(sorted_polygon,False)
+
+    if closed_polygon is None:
+        closed_polygon=build_edges(sorted_polygon,True)
+    if closed_polygon is not None:
+        closed_polygon=[(x/2,y/2) for x,y in closed_polygon]
+
+
+
+    return closed_polygon
+
+def check_if_interior_point(polygon,point):
+
+    directions=[(-1,0),(-1,-1),(0,-1),(1,-1),(1,0),(1,1),(0,1),(-1,1)]
+
+    x,y=point
+    inside=True
+    num=0
+
+    for dx,dy in directions:
+        nx,ny=x+dx,y+dy
+        if (nx,ny) in polygon:
+            num+=1
+
+    if num in [3,4,7]:
+        inside=False
+    else:
+        e_num=0
+        if (x-1,y) in polygon:
+            e_num+=1
+        if (x+1,y) in polygon:
+            e_num+=1
+        if (x,y-1) in polygon:
+            e_num+=1
+        if (x,y+1) in polygon:
+            e_num+=1
+        if e_num<=2:
+            inside=False
+
+    if x%2==1 or y%2==1:
+        inside=True
+
+
+
+    return inside
+
+def build_edges(points_list,start_axis):
+
+    points=points_list.copy()
+    edges=[points[0]]
+    axis=start_axis
+
+    while len(points)>1:
+        point=edges[len(edges)-1]
+        closest=(None,None)
+        for i in find_points_on_axis(points,axis,point):
+            if i is not point and closest[0] is None:
+                closest=i
+            if axis:
+                if i is not point and abs(i[1]-point[1])<=abs(closest[1]-point[1]):
+                    closest=i
+            else:
+                if i is not point and abs(i[0]-point[0])<=abs(closest[0]-point[0]):
+                    closest=i
+        if closest[0] is None:
+            closest=point
+        edges.append(closest)
+        if point not in points:
+            print("Error at point: "+str(point)+"\n")
+            return edges#None
+        else:
+            points.remove(point)
+        axis=not axis
+
+    return edges
+
+def find_points_on_axis(polygon,axis,target_point):
+    if axis:
+        filtered_points=sorted([point for point in polygon if point[0]==target_point[0]], key=lambda p:(p[0],p[1]))
+    else:
+        filtered_points=sorted([point for point in polygon if point[1]==target_point[1]], key=lambda p:(p[1],p[0]))
+    return filtered_points
+
+def filter_single_tiles(terrain):
+
+    directions=[(-1,0),(-1,-1),(0,-1),(1,-1),(1,0),(1,1),(0,1),(-1,1)]
+
+    for y in range(len(terrain)):
+        for x in range(len(terrain[y])):
+            num=0
+            differents=[]
+            for dx,dy in directions:
+                nx,ny=x+dx,y+dy
+                if 0<=nx<len(terrain[y]) and 0<=ny<len(terrain):
+                    if terrain[y][x]!=terrain[ny][nx]:
+                        num+=1
+                        differents.append(terrain[ny][nx])
+                    elif num!=5:
+                        num-=1
+                else:
+                    num+=1
+            if num==5 and len(differents)>0:
+                terrain[y][x]=differents[random.randrange(0,len(differents),1)]
+
+def make_polygons(terrain_init):
+
+    polygons=[]
+    terrain=[]
+
+    for y in terrain_init:
+        terrain_row=[]
+        for x in y:
+            terrain_row.append(x)
+            terrain_row.append(x)
+        terrain.append(terrain_row.copy())
+        terrain.append(terrain_row.copy())
+
+    for y in range(len(terrain)):
+        for x in range(len(terrain[y])):
+            if terrain[y][x] != -1:
+                color=terrain[y][x]
+                poly=[]
+                flood_fill(x,y,poly,terrain)
+                corners=create_corners(poly)
+                sorted_corners=sort_points(corners)
+                polygons.append((sorted_corners,color))
+
+    return polygons
+
 def MakeTile(gridX,gridY,color=c_water,obj_id="water",tile=1):
     newTile=Tile(pos=Point(tile_offset+tile_size*gridX,tile_offset+tile_size*gridY),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
     return newTile
@@ -854,7 +1026,20 @@ def GenerateChunk(chunkX, chunkY, noise_values):
     global Entities
     global Terrain
     tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water"),SimpleNamespace(color=c_error,obj_id="error")]
-    chunk_tile_types=[[1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<-0.125 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
+    chunk_tile_types,shapes_data=[[[1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<-0.125 else 0 for y in range(chunk_size)] for x in range(chunk_size)] for i in range(2)]
+    filter_single_tiles(shapes_data)
+    shapes=make_polygons(shapes_data)
+    colors = ['green','blue','yellow','red']
+
+    for polygon_coords,color in shapes:
+        polygon=Shapely_Polygon(polygon_coords)
+        x,y=polygon.exterior.xy
+        plt.plot(x,y,color='black')
+        plt.fill(x,y,color=colors[color],alpha=0.5)
+
+    plt.axis('equal')
+    plt.gca().invert_yaxis()
+    plt.show()
     print('\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types]))
     for y in range(chunk_size):
         for x in range(chunk_size):
@@ -913,6 +1098,7 @@ def MapGenerator():
     print('=======================================================')
     for i in range(chunk_limit):
         for j in range(chunk_limit):
+##            sys_time.sleep(1)
             GenerateChunk(i,j,noise_values)
     print('======================================================='+str(len(Terrain)))
     maps_generated+=1
