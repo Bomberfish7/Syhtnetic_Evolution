@@ -30,7 +30,7 @@ from Globals import *
 from Statics import *
 from Food_Types import *
 
-DEBUG_DISABLE_NOISEIMG=True
+DEBUG_DISABLE_NOISEIMG=False
 
 
 #TO DO:
@@ -143,9 +143,9 @@ def TileUpdate():
     spawnchance = 0.1/(0.2*(len(Foods)+1))#original 0.01
 
     for i in Terrain:
-        Entities[i].UpdateDimensions()
+        Entities[i].UpdateHitbox()
         r = random.uniform(0,100)
-##        r=100
+        r=100
 ##        i=Terrain[0]
         if(r < (spawnchance/ups)*Globals.timescale):
             p = random.uniform(0,100)
@@ -888,7 +888,7 @@ def sort_points(polygon):
     if closed_polygon is None:
         closed_polygon=build_edges(sorted_polygon,True)
     if closed_polygon is not None:
-        closed_polygon=[(x/2,y/2) for x,y in closed_polygon]
+        closed_polygon=[(x/2*tile_size,y/2*tile_size) for x,y in closed_polygon]
 
 
 
@@ -987,7 +987,7 @@ def filter_single_tiles(terrain):
             if num==5 and len(differents)>0:
                 terrain[y][x]=differents[random.randrange(0,len(differents),1)]
 
-def make_polygons(terrain_init):
+def make_polygons(terrain_init,chunkX,chunkY):
 
     polygons=[]
     terrain=[]
@@ -1008,7 +1008,7 @@ def make_polygons(terrain_init):
                 flood_fill(x,y,poly,terrain)
                 corners=create_corners(poly)
                 sorted_corners=sort_points(corners)
-                polygons.append((sorted_corners,color))
+                polygons.append([sorted_corners,color,Point(chunkX*chunk_size*tile_size,chunkY*chunk_size*tile_size)])
 
     return polygons
 
@@ -1025,60 +1025,74 @@ def MakeRectTile(gridX,gridY,gridW=1,gridH=1,color=c_water,obj_id="water",tile=1
 def GenerateChunk(chunkX, chunkY, noise_values):
     global Entities
     global Terrain
+    Chunk_Terrain=[]
+
     tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water"),SimpleNamespace(color=c_error,obj_id="error")]
-    chunk_tile_types,shapes_data=[[[1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<-0.125 else 0 for y in range(chunk_size)] for x in range(chunk_size)] for i in range(2)]
-    filter_single_tiles(shapes_data)
-    shapes=make_polygons(shapes_data)
-    colors = ['green','blue','yellow','red']
+    chunk_tile_types=[[1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<-0.125 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
+    filter_single_tiles(chunk_tile_types)
+    Chunk_Terrain=make_polygons(chunk_tile_types,chunkY,chunkX)
+    terrain_colors = [c_land,c_water,(200,200,175),c_error]
+    terrain_colors2 = ['green','blue','yellow','magenta']
 
-    for polygon_coords,color in shapes:
-        polygon=Shapely_Polygon(polygon_coords)
-        x,y=polygon.exterior.xy
-        plt.plot(x,y,color='black')
-        plt.fill(x,y,color=colors[color],alpha=0.5)
 
-    plt.axis('equal')
-    plt.gca().invert_yaxis()
-    plt.show()
-    print('\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types]))
-    for y in range(chunk_size):
-        for x in range(chunk_size):
-            if chunk_tile_types[x][y] < 0:
-                continue
-            noise_X = chunkX*chunk_size+x
-            noise_Y = chunkY*chunk_size+y
-            tile_type=chunk_tile_types[x][y]
-            block_W = 1
-            block_H = 1
-            c_X = x
-            c_Y = y
-            check_H = 0
-            while c_Y < chunk_size:
-                check_W = 0
-                c_X = x
-                while c_X < chunk_size:
-                    if chunk_tile_types[c_X][c_Y] == tile_type:
-                        check_W += 1
-                    else:
-                        break
-                    c_X += 1
-                if c_Y == y:
-                    block_W = check_W
-                elif check_W < block_W:
-                    break
-                c_Y += 1
-                check_H +=1
-            if check_H > block_H:
-                block_H = check_H
-            for clearY in range(block_H):
-                for clearX in range(block_W):
-                    chunk_tile_types[x+clearX][y+clearY] = -1
-##            print(str(x)+","+str(y)+" "+str(block_W)+","+str(block_H))
-            newTile=MakeRectTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,block_W,block_H,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
-##            newTile=MakeTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
-            Entities[newTile.UUID]=newTile
-            Terrain.append(newTile.UUID)
-            Entities[newTile.UUID].UpdateHitbox()
+    for polygon,tile,pos in Chunk_Terrain:
+        polygon=[Point(x-tile_boundary/2,y-tile_boundary/2) for x,y in polygon]
+        newTile=Tile(pos=pos,shape=polygon,outline=terrain_colors[tile],tile=tile)
+        Entities[newTile.UUID]=newTile
+        Terrain.append(newTile.UUID)
+
+        Entities[newTile.UUID].UpdateHitbox()
+
+
+
+##    for polygon_coords,color,pos in Chunk_Terrain:
+##        polygon=Shapely_Polygon(polygon_coords)
+##        x,y=polygon.exterior.xy
+##        plt.plot(x,y,color='black')
+##        plt.fill(x,y,color=terrain_colors2[color],alpha=0.5)
+##
+##    plt.axis('equal')
+##    plt.gca().invert_yaxis()
+##    plt.show()
+    #print('\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types]))
+##    for y in range(chunk_size):
+##        for x in range(chunk_size):
+##            if chunk_tile_types[x][y] < 0:
+##                continue
+##            noise_X = chunkX*chunk_size+x
+##            noise_Y = chunkY*chunk_size+y
+##            tile_type=chunk_tile_types[x][y]
+##            block_W = 1
+##            block_H = 1
+##            c_X = x
+##            c_Y = y
+##            check_H = 0
+##            while c_Y < chunk_size:
+##                check_W = 0
+##                c_X = x
+##                while c_X < chunk_size:
+##                    if chunk_tile_types[c_X][c_Y] == tile_type:
+##                        check_W += 1
+##                    else:
+##                        break
+##                    c_X += 1
+##                if c_Y == y:
+##                    block_W = check_W
+##                elif check_W < block_W:
+##                    break
+##                c_Y += 1
+##                check_H +=1
+##            if check_H > block_H:
+##                block_H = check_H
+##            for clearY in range(block_H):
+##                for clearX in range(block_W):
+##                    chunk_tile_types[x+clearX][y+clearY] = -1
+####            print(str(x)+","+str(y)+" "+str(block_W)+","+str(block_H))
+##            newTile=MakeRectTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,block_W,block_H,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
+####            newTile=MakeTile(noise_X-tile_boundary/2,noise_Y-tile_boundary/2,tile_data[tile_type].color,tile_data[tile_type].obj_id,tile_type)
+##            Entities[newTile.UUID]=newTile
+##            Terrain.append(newTile.UUID)
+##            Entities[newTile.UUID].UpdateHitbox()
 
 def MapGenerator():
     global Entities
@@ -1439,7 +1453,7 @@ try:
         screen.fill(c_background)
 
         for i in Terrain:
-            pygame.draw.rect(screen,Entities[i].getColor(),Entities[i].getVisDim(),width=1,border_radius=1)
+            pygame.draw.polygon(screen,Entities[i].getOutline(),Entities[i].getVisuals(),0)
 
 ##        for i in test_terrain:
 ##            pygame.draw.rect(screen,i.getColor(),i.getVisDim())
