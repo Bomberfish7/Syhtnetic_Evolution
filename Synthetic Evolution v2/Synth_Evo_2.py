@@ -1022,17 +1022,19 @@ def MakeRectTile(gridX,gridY,gridW=1,gridH=1,color=c_water,obj_id="water",tile=1
     newTile=Tile(pos=Point(tile_offset+tile_size*gridX,tile_offset+tile_size*gridY),shape=[Point(x_offset,y_offset),Point(-tile_offset,y_offset),Point(-tile_offset,-tile_offset),Point(x_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
     return newTile
 
-def GenerateChunk(chunkX, chunkY, noise_values):
+def GenerateChunk(chunkX, chunkY, tile_type_map):##noise_values):
     global Entities
     global Terrain
     Chunk_Terrain=[]
 
-    tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water"),SimpleNamespace(color=c_error,obj_id="error")]
-    chunk_tile_types=[[1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<-0.125 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
+    tile_data=[SimpleNamespace(color=c_water,obj_id="water"),SimpleNamespace(color=(200,200,175),obj_id="sand"),SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_error,obj_id="error")]
+##    chunk_tile_types=[[2 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<0.5 else 1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<1 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
+    chunk_tile_types=[[tile_type_map[chunkX*chunk_size+x][chunkY*chunk_size+y] for y in range(chunk_size)] for x in range(chunk_size)]
+    print('\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types]))
     filter_single_tiles(chunk_tile_types)
     Chunk_Terrain=make_polygons(chunk_tile_types,chunkY,chunkX)
-    terrain_colors = [c_land,c_water,(200,200,175),c_error]
-    terrain_colors2 = ['green','blue','yellow','magenta']
+    terrain_colors = [c_water,(200,200,175),c_land,c_error]
+    terrain_colors2 = ['blue','yellow','green','magenta']
 
 
     for polygon,tile,pos in Chunk_Terrain:
@@ -1102,8 +1104,8 @@ def MapGenerator():
     global terrain_type_map
     Terrain_Noise=PerlinNoise(octaves=3)
     Detail_Noise=PerlinNoise(octaves=6)
-    noise_values=[[Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary]) for y in range(tile_boundary)] for x in range(tile_boundary)]
-    terrain_type_map=[[1 if noise_values[x][y]<-0.125 else 0 for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)]
+    noise_values=[[(Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary]))*2 for y in range(tile_boundary)] for x in range(tile_boundary)]
+    terrain_type_map=[[0 if noise_values[x][y]<-0.25 else 1 if noise_values[x][y]<-0.125 else 2 for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)]
     if(not(DEBUG_DISABLE_NOISEIMG) and (Globals.devtest_mode or maps_generated==0)):
 ##        plt.figure(2)
         plt.imshow(noise_values, cmap='gray')
@@ -1113,7 +1115,7 @@ def MapGenerator():
     for i in range(chunk_limit):
         for j in range(chunk_limit):
 ##            sys_time.sleep(1)
-            GenerateChunk(i,j,noise_values)
+            GenerateChunk(i,j,terrain_type_map)#noise_values)
     print('======================================================='+str(len(Terrain)))
     maps_generated+=1
     freeze_ups=1
