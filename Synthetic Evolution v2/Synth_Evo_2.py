@@ -826,16 +826,31 @@ def FoodMove(key):
     if Entities[key].getMoveT()<=0:
         if Entities[key].getMemoryLen()>0 and random.uniform(0,100)<=70:
             target=Entities[key].getRandMemory()
-            target.setPoint([target.getA()+random.uniform(-7,7),target.getB()+random.uniform(-7,7)])
+            print(str(target))
+            target.setPoint([np.clip(target.getA()+random.uniform(-7,7),-coord_limit,coord_limit-1),np.clip(target.getB()+random.uniform(-7,7),-coord_limit,coord_limit-1)])
         else:
-            target=Point(Entities[key].getPos().getA()+random.uniform(-64,64),Entities[key].getPos().getB()+random.uniform(-64,64))
+            target=Point(np.clip(Entities[key].getPos().getA()+random.uniform(-64,64),-coord_limit,coord_limit-1),np.clip(Entities[key].getPos().getB()+random.uniform(-64,64),-coord_limit,coord_limit-1))
         if Entities[key].getAquatic()==1:
-            t=False
+            target_grid=[math.floor(target.getA()/float(tile_size)),math.floor(target.getB()/float(tile_size))]
+            target_terrain_type=terrain_type_map[target_grid[0]+int(tile_boundary/2)][target_grid[1]+int(tile_boundary/2)]
+            target_index=[target_grid[0]+int(tile_boundary/2),target_grid[1]+int(tile_boundary/2)]
+            if target_terrain_type!=0:
+                target=Point(Entities[key].getPos().getA(),Entities[key].getPos().getB())
+                print(*target_grid,sep=", ")
+                print(*target_index,sep=", ")
+                print(str(target))
+                print(str(target_terrain_type))
+##                print('\n['.join([', '.join([str(cell) for cell in row])+']' for row in terrain_type_map]))
+##                sys_time.sleep(0.5)
+                print("================")
+##            t=False
             for i in Terrain:
                 if PointInRect(target,Entities[i].getDim()):
-                    t=True
-            if not t:
-                target=Point(Entities[key].getPos().getA(),Entities[key].getPos().getB())
+                    print(str(Entities[i].tile))
+                    print(str(Entities[i].getPos()))
+##                    t=True
+##            if not t:
+##                target=Point(Entities[key].getPos().getA(),Entities[key].getPos().getB())
         target=Point(np.clip(target.getA(),-coord_limit,coord_limit-1),np.clip(target.getB(),-coord_limit,coord_limit-1))
         Entities[key].setTarget(target)
         Entities[key].setMoveT(random.uniform(5,15))
@@ -1013,7 +1028,7 @@ def make_polygons(terrain_init,chunkX,chunkY):
     return polygons
 
 def MakeTile(gridX,gridY,color=c_water,obj_id="water",tile=1):
-    newTile=Tile(pos=Point(tile_offset+tile_size*gridX,tile_offset+tile_size*gridY),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
+    newTile=Tile(pos=Point(tile_size*gridX,tile_size*gridY),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
     return newTile
 
 def MakeRectTile(gridX,gridY,gridW=1,gridH=1,color=c_water,obj_id="water",tile=1):
@@ -1022,23 +1037,22 @@ def MakeRectTile(gridX,gridY,gridW=1,gridH=1,color=c_water,obj_id="water",tile=1
     newTile=Tile(pos=Point(tile_offset+tile_size*gridX,tile_offset+tile_size*gridY),shape=[Point(x_offset,y_offset),Point(-tile_offset,y_offset),Point(-tile_offset,-tile_offset),Point(x_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
     return newTile
 
-def GenerateChunk(chunkX, chunkY, tile_type_map):##noise_values):
+def GenerateChunk(chunkY, chunkX, tile_type_map):##noise_values):
     global Entities
     global Terrain
     Chunk_Terrain=[]
 
     tile_data=[SimpleNamespace(color=c_water,obj_id="water"),SimpleNamespace(color=(200,200,175),obj_id="sand"),SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_error,obj_id="error")]
 ##    chunk_tile_types=[[2 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<0.5 else 1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<1 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
-    chunk_tile_types=[[tile_type_map[chunkX*chunk_size+x][chunkY*chunk_size+y] for y in range(chunk_size)] for x in range(chunk_size)]
+    chunk_tile_types=[[tile_type_map[chunkY*chunk_size+y][chunkX*chunk_size+x] for y in range(chunk_size)] for x in range(chunk_size)]
     print('\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types]))
-    filter_single_tiles(chunk_tile_types)
+##    filter_single_tiles(chunk_tile_types)
     Chunk_Terrain=make_polygons(chunk_tile_types,chunkY,chunkX)
     terrain_colors = [c_water,(200,200,175),c_land,c_error]
     terrain_colors2 = ['blue','yellow','green','magenta']
 
-
     for polygon,tile,pos in Chunk_Terrain:
-        polygon=[Point(x-tile_boundary/2,y-tile_boundary/2) for x,y in polygon]
+        polygon=[Point(x-coord_limit,y-coord_limit) for x,y in polygon]
         newTile=Tile(pos=pos,shape=polygon,outline=terrain_colors[tile],tile=tile)
         Entities[newTile.UUID]=newTile
         Terrain.append(newTile.UUID)
@@ -1106,6 +1120,7 @@ def MapGenerator():
     Detail_Noise=PerlinNoise(octaves=6)
     noise_values=[[(Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary]))*2 for y in range(tile_boundary)] for x in range(tile_boundary)]
     terrain_type_map=[[0 if noise_values[x][y]<-0.25 else 1 if noise_values[x][y]<-0.125 else 2 for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)]
+    filter_single_tiles(terrain_type_map)
     if(not(DEBUG_DISABLE_NOISEIMG) and (Globals.devtest_mode or maps_generated==0)):
 ##        plt.figure(2)
         plt.imshow(noise_values, cmap='gray')
@@ -1117,6 +1132,20 @@ def MapGenerator():
 ##            sys_time.sleep(1)
             GenerateChunk(i,j,terrain_type_map)#noise_values)
     print('======================================================='+str(len(Terrain)))
+    terrain_colors2 = ['blue','yellow','green','magenta']
+##    print([[str(x)+" "+str(y) for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)])
+##    for x in range(chunk_size*chunk_limit):
+##        for y in range(chunk_size*chunk_limit):
+####            print(str(x)+" "+str(y))
+##            xl=[x*tile_size,(x+1)*tile_size,(x+1)*tile_size,x*tile_size]
+##            yl=[y*tile_size,y*tile_size,(y+1)*tile_size,(y+1)*tile_size]
+##            plt.plot(xl,yl,color='black')
+##            plt.fill(xl,yl,color=terrain_colors2[terrain_type_map[x][y]],alpha=0.5)
+##
+##    plt.axis('equal')
+##    plt.gca().invert_yaxis()
+##    plt.show()
+
     maps_generated+=1
     freeze_ups=1
 
@@ -1198,6 +1227,7 @@ Display_Info=[]
 Base_Terrain=[]
 Base_Creatures=[]
 
+
 MapGenerator()
 
 timescale_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(0,15,200,25),"Timescale: "+str(Globals.timescale),visible=0)
@@ -1218,18 +1248,22 @@ light_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(150,65,200,25),"Light
 ##Entities[test_tile.UUID].UpdateHitbox()
 
 test_terrain=[]
-for j in range(3,6):
-    for i in range(5,10):
-        test_terrain.append(Tile(pos=Point(tile_size*i,tile_size*j),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*7,tile_size*2),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*8,tile_size*2),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*4,tile_size*4),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*10,tile_size*5),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*9,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*8,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
-test_terrain.append(Tile(pos=Point(tile_size*10,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+##for j in range(3,6):
+##    for i in range(5,10):
+##        test_terrain.append(Tile(pos=Point(tile_size*i,tile_size*j),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+##test_terrain.append(Tile(pos=Point(tile_size*7,tile_size*2),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+##test_terrain.append(Tile(pos=Point(tile_size*8,tile_size*2),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+##test_terrain.append(Tile(pos=Point(tile_size*4,tile_size*4),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+##test_terrain.append(Tile(pos=Point(tile_size*10,tile_size*5),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+##test_terrain.append(Tile(pos=Point(tile_size*9,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+##test_terrain.append(Tile(pos=Point(tile_size*8,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
+##test_terrain.append(Tile(pos=Point(tile_size*10,tile_size*6),shape=[Point(tile_offset,tile_offset),Point(-tile_offset,tile_offset),Point(-tile_offset,-tile_offset),Point(tile_offset,-tile_offset)],color=c_testwater,obj_id="Water",tile=1))
 
-test_terrain.append(MakeTile(0,0,color=c_testwater))
+test_terrain.append(MakeTile(0,0,color=c_error))
+test_terrain.append(MakeTile(-tile_boundary/2,-tile_boundary/2,color=c_error))
+test_terrain.append(MakeTile(-tile_boundary/2,tile_boundary/2,color=c_error))
+test_terrain.append(MakeTile(tile_boundary/2,tile_boundary/2,color=c_error))
+test_terrain.append(MakeTile(tile_boundary/2,-tile_boundary/2,color=c_error))
 
 MergeTiles()
 
@@ -1457,8 +1491,8 @@ try:
         for i in Terrain:
             pygame.draw.polygon(screen,Entities[i].getOutline(),Entities[i].getVisuals(),0)
 
-##        for i in test_terrain:
-##            pygame.draw.rect(screen,i.getColor(),i.getVisDim())
+        for i in test_terrain:
+            pygame.draw.rect(screen,i.getColor(),i.getVisDim())
 
         #for i in test_shapes:
             #pygame.draw.polygon(screen,i.getOutline(),i.getHitbox(),3)
@@ -1474,6 +1508,7 @@ try:
                     pygame.draw.rect(screen,green,i.getVisDim(),1)
             if(key not in Auras and key not in Terrain):
                 pygame.draw.polygon(screen,i.getOutline(),i.getVisuals(),3)
+
 
 
         dayscreen.set_alpha((-2.55*Globals.light+255)*np.clip((135-Globals.timescale)/135,0.35,1))
