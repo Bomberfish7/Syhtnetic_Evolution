@@ -30,7 +30,7 @@ from Globals import *
 from Statics import *
 from Food_Types import *
 
-DEBUG_DISABLE_NOISEIMG=False
+DEBUG_DISABLE_NOISEIMG=True
 
 
 #TO DO:
@@ -145,7 +145,7 @@ def TileUpdate():
     for i in Terrain:
         Entities[i].UpdateHitbox()
         r = random.uniform(0,100)
-        r=100
+##        r=100
 ##        i=Terrain[0]
         if(r < (spawnchance/ups)*Globals.timescale):
             p = random.uniform(0,100)
@@ -159,8 +159,18 @@ def TileUpdate():
 ##            print(str(Entities[i].dimensions.x)+" "+str(Entities[i].dimensions.w))
             y = random.uniform(tile_y,tile_y+tile_h)#-16,16 offset original
 ##            print(str(Entities[i].dimensions.y)+" "+str(Entities[i].dimensions.h))
-            food_type=0
+            food_type=-1
             if(Entities[i].tile==0):
+                if(p<95):
+                    food_type=3#kelp
+                else:
+                    food_type=9#fish
+            elif(Entities[i].tile==1):
+                if(p<33):
+                    food_type=0
+                else:
+                    food_type=-1
+            elif(Entities[i].tile==2):
                 if(p<50):
                     food_type=0#grass
                 elif(p<85):
@@ -170,10 +180,10 @@ def TileUpdate():
                 else:
                     food_type=5#mushroom
             else:
-                if(p<95):
-                    food_type=3#kelp
-                else:
-                    food_type=9#fish
+                print("[WARN]: Tile type "+Entities[i].tile+" does not have a spawn pool \n")
+
+            if(food_type<0):
+                continue
             newfood=CreateBaseFood(Point(x,y),0,1,food_type)
             nf_UUID=newfood.UUID
             Entities[nf_UUID]=newfood
@@ -273,12 +283,12 @@ def FoodInWater():
     for i in Foods:
         food_pos=Entities[i].getPos()
         food_grid=[math.floor(food_pos.getA()/float(tile_size)),math.floor(food_pos.getB()/float(tile_size))]
-        food_aquatic = Entities[i].getAquatic()
+        food_aquatic = 1-Entities[i].getAquatic()
         drowning=False
         dmg_scale = 0.15
 ##        print(str(food_grid[0])+", "+str(food_grid[1])+" "+str(food_grid[0]+int(tile_boundary/2))+", "+str(food_grid[1]+int(tile_boundary/2)))
         terrainType = terrain_type_map[food_grid[0]+int(tile_boundary/2)][food_grid[1]+int(tile_boundary/2)]
-        aquatic_diff = abs(terrainType-food_aquatic)
+        aquatic_diff = np.clip(abs(terrainType-food_aquatic),0,1)
         if aquatic_diff>0.15:
             drowning=True
             dmg_scale = (((aquatic_diff-0.15))*(17.0/14.0))+0.163
@@ -836,21 +846,12 @@ def FoodMove(key):
             target_index=[target_grid[0]+int(tile_boundary/2),target_grid[1]+int(tile_boundary/2)]
             if target_terrain_type!=0:
                 target=Point(Entities[key].getPos().getA(),Entities[key].getPos().getB())
-                print(*target_grid,sep=", ")
-                print(*target_index,sep=", ")
-                print(str(target))
-                print(str(target_terrain_type))
+##                print(*target_grid,sep=", ")
+##                print(*target_index,sep=", ")
+##                print(str(target))
+##                print(str(target_terrain_type))
 ##                print('\n['.join([', '.join([str(cell) for cell in row])+']' for row in terrain_type_map]))
-##                sys_time.sleep(0.5)
-                print("================")
-##            t=False
-            for i in Terrain:
-                if PointInRect(target,Entities[i].getDim()):
-                    print(str(Entities[i].tile))
-                    print(str(Entities[i].getPos()))
-##                    t=True
-##            if not t:
-##                target=Point(Entities[key].getPos().getA(),Entities[key].getPos().getB())
+##                print("================")
         target=Point(np.clip(target.getA(),-coord_limit,coord_limit-1),np.clip(target.getB(),-coord_limit,coord_limit-1))
         Entities[key].setTarget(target)
         Entities[key].setMoveT(random.uniform(5,15))
@@ -1040,12 +1041,15 @@ def MakeRectTile(gridX,gridY,gridW=1,gridH=1,color=c_water,obj_id="water",tile=1
 def GenerateChunk(chunkY, chunkX, tile_type_map):##noise_values):
     global Entities
     global Terrain
+    global map_string
     Chunk_Terrain=[]
 
     tile_data=[SimpleNamespace(color=c_water,obj_id="water"),SimpleNamespace(color=(200,200,175),obj_id="sand"),SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_error,obj_id="error")]
 ##    chunk_tile_types=[[2 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<0.5 else 1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<1 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
     chunk_tile_types=[[tile_type_map[chunkY*chunk_size+y][chunkX*chunk_size+x] for y in range(chunk_size)] for x in range(chunk_size)]
-    print('\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types]))
+    chunk_str='[['+',\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types])+']'
+    print(chunk_str)
+    map_string+=chunk_str
 ##    filter_single_tiles(chunk_tile_types)
     Chunk_Terrain=make_polygons(chunk_tile_types,chunkY,chunkX)
     terrain_colors = [c_water,(200,200,175),c_land,c_error]
@@ -1116,11 +1120,13 @@ def MapGenerator():
     global maps_generated
     global freeze_ups
     global terrain_type_map
+    global map_string
     Terrain_Noise=PerlinNoise(octaves=3)
     Detail_Noise=PerlinNoise(octaves=6)
     noise_values=[[(Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary]))*2 for y in range(tile_boundary)] for x in range(tile_boundary)]
     terrain_type_map=[[0 if noise_values[x][y]<-0.25 else 1 if noise_values[x][y]<-0.125 else 2 for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)]
     filter_single_tiles(terrain_type_map)
+    map_string="["
     if(not(DEBUG_DISABLE_NOISEIMG) and (Globals.devtest_mode or maps_generated==0)):
 ##        plt.figure(2)
         plt.imshow(noise_values, cmap='gray')
@@ -1128,9 +1134,18 @@ def MapGenerator():
 ##    tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
     print('=======================================================')
     for i in range(chunk_limit):
+        map_string+="["
         for j in range(chunk_limit):
 ##            sys_time.sleep(1)
             GenerateChunk(i,j,terrain_type_map)#noise_values)
+            map_string+=",\n"
+        map_string=map_string[:-2]
+        map_string+="],\n"
+    map_string=map_string[:-2]
+    map_string+="]\n"
+    with open("last_map.txt",'w',encoding="utf-8") as map_file:
+        map_file.write(map_string)
+
     print('======================================================='+str(len(Terrain)))
     terrain_colors2 = ['blue','yellow','green','magenta']
 ##    print([[str(x)+" "+str(y) for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)])

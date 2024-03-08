@@ -442,6 +442,7 @@ chunk_limit=6
 tile_boundary=int(chunk_size*chunk_limit)
 coord_limit=(tile_boundary*tile_size)/2
 maps_generated=0
+map_string=""
 running=True
 clock=pygame.time.Clock()
 fps=60
