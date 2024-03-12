@@ -455,6 +455,12 @@ freeze_ups=0
 camera=Point(0,0)
 zoom=Point(1,1)
 
+console_command=""
+log_font_format=["<font face='freesansbold' size=16px>","</font><br>"]
+#console command values and triggers
+cmd_dict={'help': ["list all commands and their usage", "{}<br>&nbsp&nbsp{}"], 'kill_all': ["kill all entities, including terrain", "Killing {} Entities"], 'kill_bio': ["kill all biological entities","Killing {} Biological Entities"]}
+kill_all=False
+kill_bio=False
 
 manager=gui.UIManager((s_width,s_height))
 manager.get_theme().load_theme('textbox_theme.json')

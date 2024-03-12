@@ -9,6 +9,7 @@
 
 import pygame
 import pygame_gui as gui
+from pygame_gui.core import ObjectID
 import math
 import numpy as np
 import random
@@ -600,32 +601,33 @@ def ClearRemoves():
     global Creatures
     global Entities
     global Terrain
+    global kill_bio,kill_all
 
-    for key in Foods:
+    for key in reversed(Foods):
         if key in Entities:
-            if Entities[key]._remove==True:
+            if Entities[key]._remove==True or kill_bio or kill_all:
                 if type(Entities[key]) in [Mushroom,MushroomCluster]:
                     Entities[key].aura._remove=True
                 Entities[key].getLabel().kill()
                 Foods.remove(key)
                 del Entities[key]
 
-    for key in Auras:
+    for key in reversed(Auras):
         if key in Entities:
-            if Entities[key]._remove==True:
+            if Entities[key]._remove==True or kill_bio or kill_all:
                 Auras.remove(key)
                 del Entities[key]
 
-    for key in Creatures:
+    for key in reversed(Creatures):
         if key in Entities:
-            if Entities[key]._remove==True:
+            if Entities[key]._remove==True or kill_bio or kill_all:
                 Entities[key].getLabel().kill()
                 Creatures.remove(key)
                 del Entities[key]
 
-    for key in Terrain:
+    for key in reversed(Terrain):
         if key in Entities:
-            if Entities[key]._remove==True:
+            if Entities[key]._remove==True or kill_all:
                 Entities[key].getLabel().kill()
                 Terrain.remove(key)
                 del Entities[key]
@@ -633,6 +635,8 @@ def ClearRemoves():
                     gc.collect()
                     MapGenerator()
                     break
+    kill_bio=False
+    kill_all=False
 
 def MergeClusters(a,b):
     #Merges like foods into clusters
@@ -1170,7 +1174,32 @@ def SaveData():
     saveFile = open("savedata.json",mode='w+',encoding='utf-8')
     entities = json.dump(Entities,saveFile)
 
+def FreezeUPS():
+    global freeze_ups
+    freeze_ups=2
 
+def Console(command):
+    global kill_all,kill_bio
+
+    console_output=[command]
+    split = command.split(" ")
+    command = split[0]
+    args = [split[i] for i in range(1,len(split))]
+    match command:
+        case "help":
+            for cmd in cmd_dict:
+                console_output.append(str("&nbsp&nbsp"+cmd_dict[command][1]).format(cmd,"&nbsp&nbsp"+cmd_dict[cmd][0]))
+        case "kill_all":
+            kill_all=True
+            FreezeUPS()
+            console_output.append(str("&nbsp&nbsp"+cmd_dict[command][1]).format(len(Entities)))
+        case "kill_bio":
+            kill_bio=True
+            FreezeUPS()
+            console_output.append(str("&nbsp&nbsp"+cmd_dict[command][1]).format(len(Entities)-len(Terrain)))
+        case _:
+            console_output.append(str("&nbsp&nbspCommand "+command+" not recognized."))
+    return console_output
 
 #Food Reproduction
 #   Grass: Random chance to spawn another Grass within range of itself [Cost=50%, Requirement=90%-100%, Size=~0.5]
@@ -1257,6 +1286,15 @@ sim_minute=int((sim_clock_frac-sim_hour)*60)
 clock_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(0,65,150,25),"Sim Clock: "+str("%02d" % sim_hour)+":"+str("%02d" % sim_minute),visible=0)
 light_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(150,65,200,25),"Light: "+str("%.2f" % round(Globals.light,2)),visible=0)
 
+
+#Dev Console
+dev_console_panel=gui.elements.ui_panel.UIPanel(pygame.Rect(0,0,s_width,s_height),object_id=ObjectID(class_id='@console_panel',object_id='#console_panel1'),visible=0)
+dev_console=gui.elements.UITextEntryLine(pygame.rect.Rect(0,s_height-48,s_width,48),container=dev_console_panel,object_id=ObjectID(class_id='@console_entry_line',object_id='#console_input'),visible=0,placeholder_text="enter command: (help for help)")
+dev_console.set_forbidden_characters(['`'])
+
+dev_console_log=gui.elements.ui_text_box.UITextBox(html_text=log_font_format[0]+"Start of Log"+log_font_format[1],relative_rect=pygame.Rect(0,0,s_width,s_height-24),container=dev_console_panel,object_id=ObjectID(class_id='textbox',object_id='#console_log'),visible=0)
+
+
 ##test_tile = Tile(pos=Point(0,0),shape=[Point(0,0),Point(tile_size,0),Point(tile_size,tile_size),Point(0,tile_size)],color=c_error,obj_id="Error",tile=2)
 ##Entities[test_tile.UUID]=test_tile
 ##Terrain.append(test_tile.UUID)
@@ -1337,9 +1375,19 @@ try:
                 pygame.quit()
                 sys.exit()
                 exit()
+            if event.type == gui.UI_TEXT_ENTRY_FINISHED:
+                console_command=event.text
+                dev_console.set_text("")
+                dev_console.unfocus()
+                dev_console.focus()
+##                dev_console_log.append_html_text(log_font_format[0]+console_command+log_font_format[1])
+                if len(console_command)>0:
+                    log_txt=Console(console_command)
+                    for line in log_txt:
+                        dev_console_log.append_html_text(log_font_format[0]+line+log_font_format[1])
             manager.process_events(event)
 
-            if(event.type==pygame.MOUSEBUTTONDOWN):
+            if(event.type==pygame.MOUSEBUTTONDOWN and not(Globals.devtest_console)):
                 if(event.button==1):
                     #Left Click
                     pass
@@ -1355,7 +1403,7 @@ try:
                 if(event.button==5):
                     pass
 
-            if(event.type==pygame.MOUSEBUTTONUP):
+            if(event.type==pygame.MOUSEBUTTONUP and not(Globals.devtest_console)):
                 if(event.button==1):
                     #Left Click
                     numSpawn=1
@@ -1405,93 +1453,97 @@ try:
                 if(event.button==5):
                     pass
 
-            if(event.type==pygame.MOUSEWHEEL):
+            if(event.type==pygame.MOUSEWHEEL and not(Globals.devtest_console)):
 ##                zoom.setPoint([np.clip(event.y/5+zoom.getA(),0.4,10),np.clip(event.y/5+zoom.getB(),0.4,10)])
                 zoom.setPoint([(1+event.y/10.0)*zoom.getA(),(1+event.y/10.0)*zoom.getB()])
 
             if(event.type==pygame.KEYDOWN):
-                if(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
-                    Globals.key_shift=True
-                if(event.key==pygame.K_LCTRL or event.key==pygame.K_RCTRL):
-                    Globals.key_ctrl=True
-                if(event.key==pygame.K_LALT or event.key==pygame.K_RALT):
-                    Globals.key_alt=True
+                if(not(Globals.devtest_console)):
+                    if(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
+                        Globals.key_shift=True
+                    if(event.key==pygame.K_LCTRL or event.key==pygame.K_RCTRL):
+                        Globals.key_ctrl=True
+                    if(event.key==pygame.K_LALT or event.key==pygame.K_RALT):
+                        Globals.key_alt=True
 
-                if(event.key==pygame.K_w):
-                    Globals.cam_move_up=True
-                if(event.key==pygame.K_s):
-                    Globals.cam_move_down=True
-                if(event.key==pygame.K_a):
-                    Globals.cam_move_left=True
-                if(event.key==pygame.K_d):
-                    Globals.cam_move_right=True
+                    if(event.key==pygame.K_w):
+                        Globals.cam_move_up=True
+                    if(event.key==pygame.K_s):
+                        Globals.cam_move_down=True
+                    if(event.key==pygame.K_a):
+                        Globals.cam_move_left=True
+                    if(event.key==pygame.K_d):
+                        Globals.cam_move_right=True
 
             if(event.type==pygame.KEYUP):
-                if(event.key==pygame.K_UP):
-                    Globals.devtest_foodspawn_type=(Globals.devtest_foodspawn_type+1)%11
-                elif(event.key==pygame.K_DOWN):
-                    Globals.devtest_foodspawn_type=(Globals.devtest_foodspawn_type-1)%11
-                elif(event.key==pygame.K_LEFT):
-                    if(Globals.key_shift):
-                        if(Globals.timescale>9):
-                            Globals.timescale-=10
+                if(event.key==pygame.K_BACKQUOTE):
+                    if Globals.devtest_console:
+                        dev_console_panel.hide()
                     else:
-                        if(Globals.timescale>0):
-                            Globals.timescale-=1
-                elif(event.key==pygame.K_RIGHT):
-                    if(Globals.key_shift):
-                        Globals.timescale+=10
-                    else:
-                        Globals.timescale+=1
-                elif(event.key==pygame.K_r and Globals.key_shift):
-                    Globals.timescale=1
-                elif(event.key==pygame.K_t):
-                    Globals.devtest_mode=not Globals.devtest_mode
-                    clearKeys=list()
-                    for key in Display_Info:
-                        if key not in Entities:
-                            clearKeys.append(key)
-                            continue
-                        Entities[key].setLabelVis(1 if Globals.devtest_mode else 0)
-                    for i in clearKeys:
-                        Display_Info.remove(i)
-                elif(event.key==pygame.K_BACKSLASH):
-                    Globals.devtest_spawnMany=not(Globals.devtest_spawnMany)
-                elif(event.key==pygame.K_BACKQUOTE):
-                    if(Globals.key_ctrl):
-                        #save
-                        #SaveData()
-                        pass
-                    elif(Globals.key_alt):
-                        #load
-                        pass
-                elif(event.key==pygame.K_SPACE):
-                    if(Globals.key_ctrl and Globals.key_shift and Globals.key_alt):
-                        if(len(Terrain)>0):
-                            freeze_ups=2
-                            for i in Terrain:
-                                Entities[i]._remove=True
-                            for i in Foods:
-                                Entities[i]._remove=True
+                        dev_console_panel.show()
+                    Globals.devtest_console=not(Globals.devtest_console)
+##                    dev_console_panel.visible=Globals.devtest_console
+##                    dev_console.visible=Globals.devtest_console
+##                    dev_console_log.visible=Globals.devtest_console
+                if(not(Globals.devtest_console)):
+                    if(event.key==pygame.K_UP):
+                        Globals.devtest_foodspawn_type=(Globals.devtest_foodspawn_type+1)%11
+                    elif(event.key==pygame.K_DOWN):
+                        Globals.devtest_foodspawn_type=(Globals.devtest_foodspawn_type-1)%11
+                    elif(event.key==pygame.K_LEFT):
+                        if(Globals.key_shift):
+                            if(Globals.timescale>9):
+                                Globals.timescale-=10
                         else:
-                            MapGenerator()
+                            if(Globals.timescale>0):
+                                Globals.timescale-=1
+                    elif(event.key==pygame.K_RIGHT):
+                        if(Globals.key_shift):
+                            Globals.timescale+=10
+                        else:
+                            Globals.timescale+=1
+                    elif(event.key==pygame.K_r and Globals.key_shift):
+                        Globals.timescale=1
+                    elif(event.key==pygame.K_t):
+                        Globals.devtest_mode=not Globals.devtest_mode
+                        clearKeys=list()
+                        for key in Display_Info:
+                            if key not in Entities:
+                                clearKeys.append(key)
+                                continue
+                            Entities[key].setLabelVis(1 if Globals.devtest_mode else 0)
+                        for i in clearKeys:
+                            Display_Info.remove(i)
+                    elif(event.key==pygame.K_BACKSLASH):
+                        Globals.devtest_spawnMany=not(Globals.devtest_spawnMany)
+##                    elif(event.key==pygame.K_SPACE):
+##                        if(Globals.key_ctrl and Globals.key_shift and Globals.key_alt):
+##                            if(len(Terrain)>0):
+##                                freeze_ups=2
+##                                kill_all=True
+####                                for i in Terrain:
+####                                    Entities[i]._remove=True
+####                                for i in Foods:
+####                                    Entities[i]._remove=True
+##                            else:
+##                                MapGenerator()
 
 
-                if(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
-                    Globals.key_shift=False
-                if(event.key==pygame.K_LCTRL or event.key==pygame.K_RCTRL):
-                    Globals.key_ctrl=False
-                if(event.key==pygame.K_LALT or event.key==pygame.K_RALT):
-                    Globals.key_alt=False
+                    if(event.key==pygame.K_LSHIFT or event.key==pygame.K_RSHIFT):
+                        Globals.key_shift=False
+                    if(event.key==pygame.K_LCTRL or event.key==pygame.K_RCTRL):
+                        Globals.key_ctrl=False
+                    if(event.key==pygame.K_LALT or event.key==pygame.K_RALT):
+                        Globals.key_alt=False
 
-                if(event.key==pygame.K_w):
-                    Globals.cam_move_up=False
-                if(event.key==pygame.K_s):
-                    Globals.cam_move_down=False
-                if(event.key==pygame.K_a):
-                    Globals.cam_move_left=False
-                if(event.key==pygame.K_d):
-                    Globals.cam_move_right=False
+                    if(event.key==pygame.K_w):
+                        Globals.cam_move_up=False
+                    if(event.key==pygame.K_s):
+                        Globals.cam_move_down=False
+                    if(event.key==pygame.K_a):
+                        Globals.cam_move_left=False
+                    if(event.key==pygame.K_d):
+                        Globals.cam_move_right=False
 
         manager.update(time_delta)
 

@@ -42,5 +42,20 @@
          {
              "text_horiz_alignment": "left"
          }
-     }
+     },
+	 "#console_log":
+	 {
+		 "misc":
+		 {
+			 "text_horiz_alignment": "left",
+			 "text_vert_alignment": "bottom"
+		 }
+	 },
+	 "@console_panel":
+	 {
+		 "colours":
+			 {
+				 "dark_bg":"#00000066"
+			 }
+	 }
  }
