@@ -317,7 +317,7 @@ class Object:
 class Tile(Object):
     #Any terrain object
     def __init__(self,pos=Point(),delta=Point(),angle=0,shape=[Point(),Point(),Point()],size=1,color=None,outline=None,mass=10,friction=1,obj_id="Undefined",health=None,energy=None,max_health=10,max_energy=10,immortal=True,tile=0,area=0):
-        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,obj_id,health,energy,max_health,max_energy,immortal)
+        super().__init__(pos,delta,angle,shape,size,color,outline,mass,friction,Terrain_Types[tile],health,energy,max_health,max_energy,immortal)
         self.tile=tile
         self.area=area
         self.ui_label.html_text="<p>Tile</p>"
@@ -377,6 +377,7 @@ class Aura():
         self.size=size
         self.strength=strength
         self.parent=parent
+        self.obj_id="Aura"
         self.dimensions=pygame.Rect(0,0,0,0)
         self.vis_dimensions=pygame.Rect(0,0,0,0)
         self.UpdateDimensions()
@@ -393,12 +394,14 @@ class Aura():
         return self.strength
     def getParent(self):
         return self.parent
+    def getId(self):
+        return self.obj_id
     def getDim(self):
         return self.dimensions
     def getVisDim(self):
         return self.vis_dimensions
     def getAuraCopy(self):
-        return [self.pos,self.size,self.strength,self.parent,self.UUID]
+        return [self.pos,self.size,self.strength,self.parent,self.UUID,self.obj_id]
 
     def setPos(self,pos):
         self.pos=pos
@@ -408,6 +411,8 @@ class Aura():
         self.strength=strength
     def setParent(self,parent):
         self.parent=parent
+    def setId(self,obj_id):
+        self.obj_id=obj_id
     def setDim(self,dimensions):
         self.dimensions=dimensions
     def setAuraCopy(self,copy,copyUUID=False):
@@ -417,6 +422,7 @@ class Aura():
         self.parent=copy[3]
         if copyUUID:
             self.UUID=copy[4]
+        self.obj_id=copy[5]
 
     def UpdateDimensions(self):
 
@@ -455,12 +461,7 @@ freeze_ups=0
 camera=Point(0,0)
 zoom=Point(1,1)
 
-console_command=""
-log_font_format=["<font face='freesansbold' size=16px>","</font><br>"]
-#console command values and triggers
-cmd_dict={'help': ["list all commands and their usage", "{}<br>&nbsp&nbsp{}"], 'kill_all': ["kill all entities, including terrain", "Killing {} Entities"], 'kill_bio': ["kill all biological entities","Killing {} Biological Entities"]}
-kill_all=False
-kill_bio=False
+
 
 manager=gui.UIManager((s_width,s_height))
 manager.get_theme().load_theme('textbox_theme.json')
@@ -493,6 +494,10 @@ c_egg=(240,235,200)
 c_bug=(225,225,50)
 c_fish=(25,25,40)
 
+##IDs and Relations
+Terrain_Types=["Water","Sand","Land"]
+Food_IDs={'Grass':'Grass','Bush':'Bush','Tree':'Tree','Kelp':'Kelp','Fruit':'Fruit','Mushroom':'Mushroom','Meat':'Meat','Bone':'Bone','Bug':'Bug','Fish':'Fish','Egg':'Egg'}
+
 ##Terrain Colors
 c_water=(75,165,240)
 c_land=(73, 99, 15)
@@ -503,3 +508,50 @@ font0=pygame.font.Font('freesansbold.ttf',16)
 font1=pygame.font.Font('freesansbold.ttf',8)
 font2=pygame.font.Font('freesansbold.ttf',5)
 font3=pygame.font.Font('freesansbold.ttf',32)
+
+
+console_command=""
+console_memory=[]
+console_base_indent=5
+single_tab=2
+log_font_format=["<font face='freesansbold' size=16px>","</font><br>"]
+##console command values and triggers
+#use &nbsp for whitespace, 2-4 per tab
+# &lt for < and &gt for >
+obj_ids=Terrain_Types+list(Food_IDs.keys())
+cmd_dict={
+    'clear_mem': [
+        ["Usage: clear_mem","Clear the console memory"],
+        ["Cleared {} values from memory"]
+    ],
+    'help': [
+        ["Usage: help","List all commands and their usage"],
+        ["{}<br>"+("&nbsp"*(console_base_indent+4))+"{}<br>"+("&nbsp"*(console_base_indent+4))+"{}"]
+    ],
+    'kill': [
+        ["Usage: kill &ltUUID&gt","Kill entity specified by UUID"],
+        ["Command requires 1 UUID as argument","Killing Entity {}"]
+    ],
+    'kill_all': [
+        ["Usage: kill_all","Kill all entities, including terrain"],
+        ["Killing {} Entities"]
+    ],
+    'kill_bio': [
+        ["Usage: kill_bio","Kill all biological entities"],
+        ["Killing {} Biological Entities"]
+    ],
+    'list': [
+        ["Usage: list [obj_id]","List UUIDs and Positions for Entities of specified obj_id, or valid targets if none given"],
+        ["Valid obj_ids: "+", ".join(obj_ids),"{} at {}"]
+    ],
+    'mem': [
+        ["Usage: mem","Display current console memory"],
+        ["[{}]"+"{}"+"&nbsp"*single_tab+"[{}]"]
+    ],
+    'inspect': [
+        ["Usage: inspect &ltUUID&gt","Show data for entity specified by UUID"],
+        ["Command requires 1 UUID as argument","{}"]
+    ]
+}
+kill_all=False
+kill_bio=False

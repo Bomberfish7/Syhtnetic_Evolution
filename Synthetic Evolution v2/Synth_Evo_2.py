@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 from shapely.geometry import Polygon as Shapely_Polygon
+import re
 
 from types import SimpleNamespace
 import gc
@@ -1052,7 +1053,7 @@ def GenerateChunk(chunkY, chunkX, tile_type_map):##noise_values):
 ##    chunk_tile_types=[[2 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<0.5 else 1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<1 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
     chunk_tile_types=[[tile_type_map[chunkY*chunk_size+y][chunkX*chunk_size+x] for y in range(chunk_size)] for x in range(chunk_size)]
     chunk_str='[['+',\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types])+']'
-    print(chunk_str)
+##    print(chunk_str)
     map_string+=chunk_str
 ##    filter_single_tiles(chunk_tile_types)
     Chunk_Terrain=make_polygons(chunk_tile_types,chunkY,chunkX)
@@ -1136,7 +1137,7 @@ def MapGenerator():
         plt.imshow(noise_values, cmap='gray')
         plt.show()
 ##    tile_data=[SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_water,obj_id="water")]
-    print('=======================================================')
+##    print('=======================================================')
     for i in range(chunk_limit):
         map_string+="["
         for j in range(chunk_limit):
@@ -1150,7 +1151,7 @@ def MapGenerator():
     with open("last_map.txt",'w',encoding="utf-8") as map_file:
         map_file.write(map_string)
 
-    print('======================================================='+str(len(Terrain)))
+##    print('======================================================='+str(len(Terrain)))
     terrain_colors2 = ['blue','yellow','green','magenta']
 ##    print([[str(x)+" "+str(y) for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)])
 ##    for x in range(chunk_size*chunk_limit):
@@ -1179,27 +1180,71 @@ def FreezeUPS():
     freeze_ups=2
 
 def Console(command):
-    global kill_all,kill_bio
+    global kill_all,kill_bio,console_memory
 
     console_output=[command]
+    result_memory=[[str(command),0]]
     split = command.split(" ")
     command = split[0]
     args = [split[i] for i in range(1,len(split))]
+    failed=False
     match command:
+        case "clear_mem":
+            console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][0]).format(len(console_memory)))
+            result_memory.append(["",None])
+            console_memory.clear()
         case "help":
             for cmd in cmd_dict:
-                console_output.append(str("&nbsp&nbsp"+cmd_dict[command][1]).format(cmd,"&nbsp&nbsp"+cmd_dict[cmd][0]))
+                console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][0]).format(cmd,cmd_dict[cmd][0][0],cmd_dict[cmd][0][1]))
+                result_memory.append(["",None])
+        case "kill":
+            try:
+                console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format(args[0]))
+                Entities[args[0]]._remove=True
+            except Exception:
+                console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format("ERROR: Entity Does Not Exist"))
+            finally:
+                result_memory.append(["",None])
         case "kill_all":
             kill_all=True
             FreezeUPS()
-            console_output.append(str("&nbsp&nbsp"+cmd_dict[command][1]).format(len(Entities)))
+            console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][0]).format(len(Entities)))
+            result_memory.append(["",None])
         case "kill_bio":
             kill_bio=True
             FreezeUPS()
-            console_output.append(str("&nbsp&nbsp"+cmd_dict[command][1]).format(len(Entities)-len(Terrain)))
+            console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][0]).format(len(Entities)-len(Terrain)))
+            result_memory.append(["",None])
+        case "list":
+            variant=1 if len(args)>0 else 0
+            args=[i.capitalize() for i in args]
+            strVar=str("&nbsp"*single_tab+cmd_dict[command][1][variant])
+            if variant==1:
+                for key in Entities:
+                    if Entities[key].getId()==args[0]:
+                        console_output.append(str(strVar).format(key,Entities[key].getPos()))
+                        result_memory.append([str(key),len(result_memory)])
+            else:
+                console_output.append(strVar)
+                result_memory.append(["",None])
+        case "mem":
+            for record in console_memory:
+                recordIdStr="["+str(record[1])+"]"
+                recordIdOffset="&nbsp"*(max(0,console_base_indent-len(recordIdStr)))
+                console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][0]).format(record[1],recordIdOffset,record[0]))
+                result_memory.append(["",None])
+        case "inspect":
+            try:
+                entityStr =re.sub("\t","&nbsp"*2,str(Entities[args[0]]))
+                console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format(entityStr))
+            except:
+                console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format("ERROR: Entity Does Not Exist"))
+            finally:
+                result_memory.append(["",None])
         case _:
-            console_output.append(str("&nbsp&nbspCommand "+command+" not recognized."))
-    return console_output
+            console_output.append(str("&nbsp"*console_base_indent+"Command "+command+" not recognized."))
+            result_memory.append(["",None])
+    return console_output,result_memory
 
 #Food Reproduction
 #   Grass: Random chance to spawn another Grass within range of itself [Cost=50%, Requirement=90%-100%, Size=~0.5]
@@ -1289,7 +1334,7 @@ light_label=gui.elements.ui_label.UILabel(pygame.rect.Rect(150,65,200,25),"Light
 
 #Dev Console
 dev_console_panel=gui.elements.ui_panel.UIPanel(pygame.Rect(0,0,s_width,s_height),object_id=ObjectID(class_id='@console_panel',object_id='#console_panel1'),visible=0)
-dev_console=gui.elements.UITextEntryLine(pygame.rect.Rect(0,s_height-48,s_width,48),container=dev_console_panel,object_id=ObjectID(class_id='@console_entry_line',object_id='#console_input'),visible=0,placeholder_text="enter command: (help for help)")
+dev_console=gui.elements.UITextEntryLine(pygame.rect.Rect(0,s_height-48,s_width,48),container=dev_console_panel,object_id=ObjectID(class_id='@console_entry_line',object_id='#console_input'),visible=0,placeholder_text="enter command: (help for help), $mem<index> can be used to reference log history labeled by [index]")
 dev_console.set_forbidden_characters(['`'])
 
 dev_console_log=gui.elements.ui_text_box.UITextBox(html_text=log_font_format[0]+"Start of Log"+log_font_format[1],relative_rect=pygame.Rect(0,0,s_width,s_height-24),container=dev_console_panel,object_id=ObjectID(class_id='textbox',object_id='#console_log'),visible=0)
@@ -1380,11 +1425,29 @@ try:
                 dev_console.set_text("")
                 dev_console.unfocus()
                 dev_console.focus()
-##                dev_console_log.append_html_text(log_font_format[0]+console_command+log_font_format[1])
                 if len(console_command)>0:
-                    log_txt=Console(console_command)
-                    for line in log_txt:
-                        dev_console_log.append_html_text(log_font_format[0]+line+log_font_format[1])
+                    temp=re.findall(r"(\$mem\d+)",console_command)
+                    indexes=[]
+                    for i in temp:
+                        if int(i[4:]) < len(console_memory):
+                            indexes.append(int(i[4:]))
+                        else:
+                            indexes.append(-1)
+                    if -1 not in indexes:
+                        mem_vals=[console_memory[i][0] for i in indexes]
+                        console_command=re.sub(r"(\$mem\d+)","{}",console_command)
+                        console_command=console_command.format(*mem_vals)
+                        log_txt,memory=Console(console_command)
+                        base_memLen = len(console_memory)
+                        [console_memory.append(mem) for mem in memory if mem[1]!=None]
+                        for i in range(len(log_txt)):
+                            line=log_txt[i]
+                            mem_id=memory[i][1]
+                            memIdStr="["+str(base_memLen+ (mem_id if mem_id != None else 0))+"]"
+                            mem="&nbsp"*console_base_indent if mem_id==None else str(memIdStr)+"&nbsp"*(max(0,console_base_indent-len(memIdStr)))
+                            dev_console_log.append_html_text(log_font_format[0]+mem+line+log_font_format[1])
+                    else:
+                        dev_console_log.append_html_text(log_font_format[0]+"&nbsp"*console_base_indent+"Invalid Memory Index"+log_font_format[1])
             manager.process_events(event)
 
             if(event.type==pygame.MOUSEBUTTONDOWN and not(Globals.devtest_console)):
