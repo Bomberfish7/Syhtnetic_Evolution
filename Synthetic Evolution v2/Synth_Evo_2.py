@@ -1193,18 +1193,41 @@ def Console(command):
             console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][0]).format(len(console_memory)))
             result_memory.append(["",None])
             console_memory.clear()
+        case "entity_details":
+            visibility=0
+            for i in args[1:]:
+                try:
+                    arg0 = args[0].lower()
+                    visibility=1 if arg0=='show' else 0 if arg0=='hide' else -1
+                    if visibility<0:
+                        break
+
+                    console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>1 else 0]).format(args[0],i))
+                    Entities[i].setLabelVis(visibility)
+                    if visibility>0:
+                        Display_Info.append(i)
+                    else:
+                        Display_Info.remove(i)
+                except:
+                    console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>1 else 0]).format("ERROR: Entity Does Not Exist"))
+                finally:
+                    result_memory.append(["",None])
+            if visibility<0:
+                console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>1 else 0]).format("ERROR: Invalid Directive in argument 0"))
+                result_memory.append(["",None])
         case "help":
             for cmd in cmd_dict:
                 console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][0]).format(cmd,cmd_dict[cmd][0][0],cmd_dict[cmd][0][1]))
                 result_memory.append(["",None])
         case "kill":
-            try:
-                console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format(args[0]))
-                Entities[args[0]]._remove=True
-            except Exception:
-                console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format("ERROR: Entity Does Not Exist"))
-            finally:
-                result_memory.append(["",None])
+            for i in args:
+                try:
+                    console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format(i))
+                    Entities[i]._remove=True
+                except Exception:
+                    console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format("ERROR: Entity Does Not Exist"))
+                finally:
+                    result_memory.append(["",None])
         case "kill_all":
             kill_all=True
             FreezeUPS()
@@ -1234,13 +1257,14 @@ def Console(command):
                 console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][0]).format(record[1],recordIdOffset,record[0]))
                 result_memory.append(["",None])
         case "inspect":
-            try:
-                entityStr =re.sub("\t","&nbsp"*2,str(Entities[args[0]]))
-                console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format(entityStr))
-            except:
-                console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format("ERROR: Entity Does Not Exist"))
-            finally:
-                result_memory.append(["",None])
+            for i in args:
+                try:
+                    entityStr =re.sub("\t","&nbsp"*2,str(Entities[i]))
+                    console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format(entityStr))
+                except:
+                    console_output.append(str("&nbsp"*single_tab+cmd_dict[command][1][1 if len(args)>0 else 0]).format("ERROR: Entity Does Not Exist"))
+                finally:
+                    result_memory.append(["",None])
         case _:
             console_output.append(str("&nbsp"*console_base_indent+"Command "+command+" not recognized."))
             result_memory.append(["",None])

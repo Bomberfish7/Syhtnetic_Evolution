@@ -524,12 +524,16 @@ cmd_dict={
         ["Usage: clear_mem","Clear the console memory"],
         ["Cleared {} values from memory"]
     ],
+    'entity_details': [
+        ["Usage: entity_details show/hide &ltUUID&gt","Show or Hide the overhead detail text for specified UUID(s)"],
+        ["Command requires show/hide directive and at least one UUID","Details {} for {}"]
+    ],
     'help': [
         ["Usage: help","List all commands and their usage"],
         ["{}<br>"+("&nbsp"*(console_base_indent+4))+"{}<br>"+("&nbsp"*(console_base_indent+4))+"{}"]
     ],
     'kill': [
-        ["Usage: kill &ltUUID&gt","Kill entity specified by UUID"],
+        ["Usage: kill &ltUUID&gt","Kill entity specified by UUID(s)"],
         ["Command requires 1 UUID as argument","Killing Entity {}"]
     ],
     'kill_all': [
@@ -549,7 +553,7 @@ cmd_dict={
         ["[{}]"+"{}"+"&nbsp"*single_tab+"[{}]"]
     ],
     'inspect': [
-        ["Usage: inspect &ltUUID&gt","Show data for entity specified by UUID"],
+        ["Usage: inspect &ltUUID&gt","Show data for entity specified by UUID(s)"],
         ["Command requires 1 UUID as argument","{}"]
     ]
 }
