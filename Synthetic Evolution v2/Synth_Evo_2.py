@@ -199,83 +199,6 @@ def TileUpdate():
     for i in test_terrain:
         i.UpdateDimensions()
 
-def SortTiles():
-    #Sorts terrain tiles first by y value, then x
-    global test_terrain
-
-    test_terrain.sort(key=lambda i: i.getPos().getB())
-    i=0
-    while i<len(test_terrain)-1:
-        if(test_terrain[i].getPos().getB()==test_terrain[i+1].getPos().getB() and test_terrain[i].getPos().getA()>test_terrain[i+1].getPos().getA()):
-            IndexSwap(test_terrain,i,i+1)
-            i-=1
-        else:
-            i+=1
-
-def IndexSwap(edit_list,i,j):
-    #Swaps the indexes of 2 items in a list
-    edit_list[i],edit_list[j]=edit_list[j],edit_list[i]
-
-def MergeTiles():
-    #Merges like tiles to make computing easier
-    global test_terrain
-    global tile_size
-    global tile_offset
-    SortTiles()
-
-    a=[]
-    b=[]
-
-    for i in range(len(test_terrain)):
-        a.append(Tile())
-        b.append(Tile())
-        a[i].setTileCopy(test_terrain[i].getTileCopy())
-        b[i].setTileCopy(test_terrain[i].getTileCopy())
-
-    # Check H then V
-    a=MergeTilesV(MergeTilesH(a))
-    # Check V then H
-    b=MergeTilesH(MergeTilesV(b))
-
-    if len(a)<=len(b):
-        test_terrain=a.copy()
-    else:
-        test_terrain=b.copy()
-
-def MergeTilesH(edit_list):
-    #Horizontally merges tiles
-    new_list=edit_list.copy()
-    i=len(new_list)-1
-    while i>0:
-        j=i-1
-        while j>=0:
-            if(i!=j and PointInRect(Point(new_list[i].getDim().midleft[0]-tile_offset,new_list[i].getPos().getB()),new_list[j].getDim()) and new_list[i].getDim().h==new_list[j].getDim().h):
-                new_list[i].setShapePoint(Point(new_list[i].getShapePoint(1).getA()-new_list[j].getDim().w,new_list[i].getShapePoint(1).getB()),1)
-                new_list[i].setShapePoint(Point(new_list[i].getShapePoint(2).getA()-new_list[j].getDim().w,new_list[i].getShapePoint(2).getB()),2)
-                new_list[i].UpdateHitbox()
-                new_list.pop(j)
-                i-=1
-            j-=1
-        i-=1
-    return new_list.copy()
-
-def MergeTilesV(edit_list):
-    #Vertically merges tiles
-    new_list=edit_list.copy()
-    i=len(new_list)-1
-    while i>0:
-        j=i-1
-        while j>=0:
-            if(i!=j and PointInRect(Point(new_list[i].getPos().getA(),new_list[i].getDim().midtop[1]-tile_offset),new_list[j].getDim()) and new_list[i].getDim().w==new_list[j].getDim().w):
-                new_list[i].setShapePoint(Point(new_list[i].getShapePoint(2).getA(),new_list[i].getShapePoint(2).getB()-new_list[j].getDim().h),2)
-                new_list[i].setShapePoint(Point(new_list[i].getShapePoint(3).getA(),new_list[i].getShapePoint(3).getB()-new_list[j].getDim().h),3)
-                new_list[i].UpdateHitbox()
-                new_list.pop(j)
-                i-=1
-            j-=1
-        i-=1
-    return new_list.copy()
-
 def FoodInWater():
     #Hurts foods outside of their correct area
     global Foods
@@ -896,117 +819,133 @@ def create_corners(polygon):
 
 def sort_points(polygon):
 
-    sorted_points=[]
+    direction=0
+    sorted_polygon=[]
+    point_found=True
+    i=0
 
-    for point in polygon:
-        if not check_if_interior_point(polygon,point):
-            sorted_points.append(point)
+    sorted_points=sorted(polygon, key=lambda p:(p[1],p[0]))
 
-    sorted_polygon=sorted(sorted_points, key=lambda p:(p[1],p[0]))
-
-    closed_polygon=build_edges(sorted_polygon,False)
-
-    if closed_polygon is None:
-        closed_polygon=build_edges(sorted_polygon,True)
-    if closed_polygon is not None:
-        closed_polygon=[(x/2*tile_size,y/2*tile_size) for x,y in closed_polygon]
-
-
-
-    return closed_polygon
-
-def check_if_interior_point(polygon,point):
-
-    directions=[(-1,0),(-1,-1),(0,-1),(1,-1),(1,0),(1,1),(0,1),(-1,1)]
-
-    x,y=point
-    inside=True
-    num=0
-
-    for dx,dy in directions:
-        nx,ny=x+dx,y+dy
-        if (nx,ny) in polygon:
-            num+=1
-
-    if num in [3,4,7]:
-        inside=False
-    else:
-        e_num=0
-        if (x-1,y) in polygon:
-            e_num+=1
-        if (x+1,y) in polygon:
-            e_num+=1
-        if (x,y-1) in polygon:
-            e_num+=1
-        if (x,y+1) in polygon:
-            e_num+=1
-        if e_num<=2:
-            inside=False
-
-    if x%2==1 or y%2==1:
-        inside=True
-
-
-
-    return inside
-
-def build_edges(points_list,start_axis):
-
-    points=points_list.copy()
-    edges=[points[0]]
-    axis=start_axis
-
-    while len(points)>1:
-        point=edges[len(edges)-1]
-        closest=(None,None)
-        for i in find_points_on_axis(points,axis,point):
-            if i is not point and closest[0] is None:
-                closest=i
-            if axis:
-                if i is not point and abs(i[1]-point[1])<=abs(closest[1]-point[1]):
-                    closest=i
-            else:
-                if i is not point and abs(i[0]-point[0])<=abs(closest[0]-point[0]):
-                    closest=i
-        if closest[0] is None:
-            closest=point
-        edges.append(closest)
-        if point not in points:
-            print("Error at point: "+str(point)+"\n")
-            return edges#None
+    while point_found:
+        next_point,theta=find_next_exterior_point(sorted_points,sorted_points[i],direction)
+        if theta is None:
+            point_found=False
         else:
-            points.remove(point)
-        axis=not axis
+            if theta!=0:
+                sorted_polygon.append(sorted_points[i])
+            i=sorted_points.index(next_point)
+            direction+=theta
+            direction%=4
+            if next_point in sorted_polygon:
+                point_found=False
 
-    return edges
+    final_polygon=[(x*tile_size,y*tile_size) for x,y in sorted_polygon]
 
-def find_points_on_axis(polygon,axis,target_point):
-    if axis:
-        filtered_points=sorted([point for point in polygon if point[0]==target_point[0]], key=lambda p:(p[0],p[1]))
-    else:
-        filtered_points=sorted([point for point in polygon if point[1]==target_point[1]], key=lambda p:(p[1],p[0]))
-    return filtered_points
+    return final_polygon
 
-def filter_single_tiles(terrain):
+def find_next_exterior_point(polygon,point,direction):
 
-    directions=[(-1,0),(-1,-1),(0,-1),(1,-1),(1,0),(1,1),(0,1),(-1,1)]
+    if direction==0: #Moving Right
+        p=check_north(polygon,point)
+        if p:
+            return p,1
+        p=check_east(polygon,point)
+        if p:
+            return p,0
+        p=check_south(polygon,point)
+        if p:
+            return p,-1
+        return None,None
 
-    for y in range(len(terrain)):
-        for x in range(len(terrain[y])):
-            num=0
-            differents=[]
-            for dx,dy in directions:
-                nx,ny=x+dx,y+dy
-                if 0<=nx<len(terrain[y]) and 0<=ny<len(terrain):
-                    if terrain[y][x]!=terrain[ny][nx]:
-                        num+=1
-                        differents.append(terrain[ny][nx])
-                    elif num!=5:
-                        num-=1
-                else:
-                    num+=1
-            if num==5 and len(differents)>0:
-                terrain[y][x]=differents[random.randrange(0,len(differents),1)]
+    elif direction==1: #Moving Up
+        p=check_west(polygon,point)
+        if p:
+            return p,1
+        p=check_north(polygon,point)
+        if p:
+            return p,0
+        p=check_east(polygon,point)
+        if p:
+            return p,-1
+        return None,None
+
+    elif direction==2: #Moving Left
+        p=check_south(polygon,point)
+        if p:
+            return p,1
+        p=check_west(polygon,point)
+        if p:
+            return p,0
+        p=check_north(polygon,point)
+        if p:
+            return p,-1
+        return None,None
+
+    else: #Moving Down
+        p=check_east(polygon,point)
+        if p:
+            return p,1
+        p=check_south(polygon,point)
+        if p:
+            return p,0
+        p=check_west(polygon,point)
+        if p:
+            return p,-1
+        return None,None
+
+def check_north(polygon,point):
+
+    left=0
+    right=polygon.index(point)
+    result=None
+    x,y=point
+
+    while left<=right:
+        mid=(left+right)//2
+        if polygon[mid][0]==x and polygon[mid][1]==y-1:
+            result=polygon[mid]
+            break
+        elif polygon[mid][1]<y-1 or polygon[mid][1]==y-1 and polygon[mid][0]<x:
+            left=mid+1
+        else:
+            right=mid-1
+
+    return result
+
+def check_south(polygon,point):
+
+    left=polygon.index(point)
+    right=len(polygon)-1
+    result=None
+    x,y=point
+
+    while left<=right:
+        mid=(left+right)//2
+        if polygon[mid][0]==x and polygon[mid][1]==y+1:
+            result=polygon[mid]
+            break
+        elif polygon[mid][1]>y+1 or polygon[mid][1]==y+1 and polygon[mid][0]>x:
+            right=mid-1
+        else:
+            left=mid+1
+
+    return result
+
+def check_east(polygon,point):
+
+    i=polygon.index(point)
+    x,y=point
+    if i<len(polygon)-1 and polygon[i+1]==(x+1,y):
+        return polygon[i+1]
+    return None
+
+def check_west(polygon,point):
+
+    i=polygon.index(point)
+    x,y=point
+    if i>0 and polygon[i-1]==(x-1,y):
+        return polygon[i-1]
+    return None
 
 def make_polygons(terrain_init,chunkX,chunkY):
 
@@ -1017,8 +956,6 @@ def make_polygons(terrain_init,chunkX,chunkY):
         terrain_row=[]
         for x in y:
             terrain_row.append(x)
-            terrain_row.append(x)
-        terrain.append(terrain_row.copy())
         terrain.append(terrain_row.copy())
 
     for y in range(len(terrain)):
@@ -1055,7 +992,6 @@ def GenerateChunk(chunkY, chunkX, tile_type_map):##noise_values):
     chunk_str='[['+',\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types])+']'
 ##    print(chunk_str)
     map_string+=chunk_str
-##    filter_single_tiles(chunk_tile_types)
     Chunk_Terrain=make_polygons(chunk_tile_types,chunkY,chunkX)
     terrain_colors = [c_water,(200,200,175),c_land,c_error]
     terrain_colors2 = ['blue','yellow','green','magenta']
@@ -1130,7 +1066,6 @@ def MapGenerator():
     Detail_Noise=PerlinNoise(octaves=6)
     noise_values=[[(Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary]))*2 for y in range(tile_boundary)] for x in range(tile_boundary)]
     terrain_type_map=[[0 if noise_values[x][y]<-0.25 else 1 if noise_values[x][y]<-0.125 else 2 for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)]
-    filter_single_tiles(terrain_type_map)
     map_string="["
     if(not(DEBUG_DISABLE_NOISEIMG) and (Globals.devtest_mode or maps_generated==0)):
 ##        plt.figure(2)
@@ -1156,7 +1091,7 @@ def MapGenerator():
 ##    print([[str(x)+" "+str(y) for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)])
 ##    for x in range(chunk_size*chunk_limit):
 ##        for y in range(chunk_size*chunk_limit):
-####            print(str(x)+" "+str(y))
+##            print(str(x)+" "+str(y))
 ##            xl=[x*tile_size,(x+1)*tile_size,(x+1)*tile_size,x*tile_size]
 ##            yl=[y*tile_size,y*tile_size,(y+1)*tile_size,(y+1)*tile_size]
 ##            plt.plot(xl,yl,color='black')
@@ -1386,8 +1321,6 @@ test_terrain.append(MakeTile(-tile_boundary/2,-tile_boundary/2,color=c_error))
 test_terrain.append(MakeTile(-tile_boundary/2,tile_boundary/2,color=c_error))
 test_terrain.append(MakeTile(tile_boundary/2,tile_boundary/2,color=c_error))
 test_terrain.append(MakeTile(tile_boundary/2,-tile_boundary/2,color=c_error))
-
-MergeTiles()
 
 try:
 
