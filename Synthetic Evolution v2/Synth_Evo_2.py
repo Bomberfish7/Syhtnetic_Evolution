@@ -144,35 +144,31 @@ def TileUpdate():
 
     spawnchance = 0.1/(0.2*(len(Foods)+1))#original 0.01
 
-    for i in Terrain:
-        Entities[i].UpdateHitbox()
+    for chance in range(100):
         r = random.uniform(0,100)
 ##        r=100
-##        i=Terrain[0]
         if(r < (spawnchance/ups)*Globals.timescale):
-            p = random.uniform(0,100)
-            tile_dim = Entities[i].getDim()
-            tile_x = tile_dim.x
-            tile_y = tile_dim.y
-            tile_w = tile_dim.w
-            tile_h = tile_dim.h
+            r_tile_grid_x = int(random.uniform(0,tile_boundary))
+            r_tile_grid_y = int(random.uniform(0,tile_boundary))
+            r_tile_x = (r_tile_grid_x - int(tile_boundary/2)) * tile_size
+            r_tile_y = (r_tile_grid_y - int(tile_boundary/2)) * tile_size
+            x = random.uniform(r_tile_x,r_tile_x+tile_size)
+            y = random.uniform(r_tile_y,r_tile_y+tile_size)
 
-            x = random.uniform(tile_x,tile_x+tile_w)#-16,16 offset original
-##            print(str(Entities[i].dimensions.x)+" "+str(Entities[i].dimensions.w))
-            y = random.uniform(tile_y,tile_y+tile_h)#-16,16 offset original
-##            print(str(Entities[i].dimensions.y)+" "+str(Entities[i].dimensions.h))
+            p = random.uniform(0,100)
+            tile_val = terrain_type_map[r_tile_grid_x][r_tile_grid_y]
             food_type=-1
-            if(Entities[i].tile==Terrain_Dict["Water"]):
+            if(tile_val==Terrain_Dict["Water"]):
                 if(p<95):
                     food_type=3#kelp
                 else:
                     food_type=9#fish
-            elif(Entities[i].tile==Terrain_Dict["Sand"]):
+            elif(tile_val==Terrain_Dict["Sand"]):
                 if(p<33):
                     food_type=0
                 else:
                     food_type=-1
-            elif(Entities[i].tile==Terrain_Dict["Land"]):
+            elif(tile_val==Terrain_Dict["Land"]):
                 if(p<50):
                     food_type=0#grass
                 elif(p<85):
@@ -182,7 +178,7 @@ def TileUpdate():
                 else:
                     food_type=5#mushroom
             else:
-                print("[WARN]: Tile type "+Entities[i].tile+" does not have a spawn pool \n")
+                print("[WARN]: Tile type "+tile_val+" does not have a spawn pool \n")
 
             if(food_type<0):
                 continue
@@ -195,6 +191,57 @@ def TileUpdate():
                 Entities[newfood.getAura().UUID]=newfood.getAura()
                 Entities[nf_UUID].setAura(Entities[newfood.getAura().UUID])
                 Auras.append(newfood.getAura().UUID)
+    for i in Terrain:
+        Entities[i].UpdateHitbox()
+##        r = random.uniform(0,100)
+####        r=100
+####        i=Terrain[0]
+##        if(r < (spawnchance/ups)*Globals.timescale):
+##            p = random.uniform(0,100)
+##            tile_dim = Entities[i].getDim()
+##            tile_x = tile_dim.x
+##            tile_y = tile_dim.y
+##            tile_w = tile_dim.w
+##            tile_h = tile_dim.h
+##
+##            x = random.uniform(tile_x,tile_x+tile_w)#-16,16 offset original
+####            print(str(Entities[i].dimensions.x)+" "+str(Entities[i].dimensions.w))
+##            y = random.uniform(tile_y,tile_y+tile_h)#-16,16 offset original
+####            print(str(Entities[i].dimensions.y)+" "+str(Entities[i].dimensions.h))
+##            food_type=-1
+##            if(Entities[i].tile==Terrain_Dict["Water"]):
+##                if(p<95):
+##                    food_type=3#kelp
+##                else:
+##                    food_type=9#fish
+##            elif(Entities[i].tile==Terrain_Dict["Sand"]):
+##                if(p<33):
+##                    food_type=0
+##                else:
+##                    food_type=-1
+##            elif(Entities[i].tile==Terrain_Dict["Land"]):
+##                if(p<50):
+##                    food_type=0#grass
+##                elif(p<85):
+##                    food_type=1#bush
+##                elif(p<90):
+##                    food_type=2#tree
+##                else:
+##                    food_type=5#mushroom
+##            else:
+##                print("[WARN]: Tile type "+Entities[i].tile+" does not have a spawn pool \n")
+##
+##            if(food_type<0):
+##                continue
+##            newfood=CreateBaseFood(Point(x,y),0,1,food_type)
+##            nf_UUID=newfood.UUID
+##            Entities[nf_UUID]=newfood
+##            Foods.append(nf_UUID)
+##            if food_type==5:
+##                Entities[nf_UUID].GenerateAura()
+##                Entities[newfood.getAura().UUID]=newfood.getAura()
+##                Entities[nf_UUID].setAura(Entities[newfood.getAura().UUID])
+##                Auras.append(newfood.getAura().UUID)
 
     for i in test_terrain:
         i.UpdateDimensions()
@@ -235,8 +282,10 @@ def FoodRegen():
 
     for i in Foods:
         if type(Entities[i]) in [Plant,PlantCluster,Mushroom,MushroomCluster,PreyFood]:
-            Entities[i].RegenHealth()
-            Entities[i].Grow()
+            if (Entities[i].getHealth() < Entities[i].getMaxHP()):
+                Entities[i].RegenHealth()
+            if (Entities[i].getSize() < Entities[i].getMaxSZ()*1.5):
+                Entities[i].Grow()
             if type(Entities[i]) in [Mushroom,MushroomCluster]:
                 Entities[i].getAura().UpdateDimensions()
         if type(Entities[i]) is PreyFood:
@@ -1601,7 +1650,8 @@ try:
                 elif(key in Auras):
                     pygame.draw.rect(screen,green,i.getVisDim(),1)
             if(key not in Auras and key not in Terrain):
-                pygame.draw.polygon(screen,i.getOutline(),i.getVisuals(),3)
+                if(zoom.getA()>0.25 or i.getSize()>0.75):
+                    pygame.draw.polygon(screen,i.getOutline(),i.getVisuals(),3)
 
 
 

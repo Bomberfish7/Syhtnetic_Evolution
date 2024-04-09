@@ -38,9 +38,14 @@
 
      "label":
      {
+		 "colours":
+		 {
+			"text_shadow": "#222222"
+		 },
          "misc":
          {
-             "text_horiz_alignment": "left"
+             "text_horiz_alignment": "left",
+			 "text_shadow_size": "1"
          }
      },
 	 "#console_log":
