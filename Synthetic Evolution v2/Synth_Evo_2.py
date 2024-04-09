@@ -162,17 +162,17 @@ def TileUpdate():
             y = random.uniform(tile_y,tile_y+tile_h)#-16,16 offset original
 ##            print(str(Entities[i].dimensions.y)+" "+str(Entities[i].dimensions.h))
             food_type=-1
-            if(Entities[i].tile==0):
+            if(Entities[i].tile==Terrain_Dict["Water"]):
                 if(p<95):
                     food_type=3#kelp
                 else:
                     food_type=9#fish
-            elif(Entities[i].tile==1):
+            elif(Entities[i].tile==Terrain_Dict["Sand"]):
                 if(p<33):
                     food_type=0
                 else:
                     food_type=-1
-            elif(Entities[i].tile==2):
+            elif(Entities[i].tile==Terrain_Dict["Land"]):
                 if(p<50):
                     food_type=0#grass
                 elif(p<85):
@@ -208,12 +208,12 @@ def FoodInWater():
     for i in Foods:
         food_pos=Entities[i].getPos()
         food_grid=[math.floor(food_pos.getA()/float(tile_size)),math.floor(food_pos.getB()/float(tile_size))]
-        food_aquatic = 1-Entities[i].getAquatic()
+        food_aquatic = Entities[i].getAquatic()
         drowning=False
         dmg_scale = 0.15
 ##        print(str(food_grid[0])+", "+str(food_grid[1])+" "+str(food_grid[0]+int(tile_boundary/2))+", "+str(food_grid[1]+int(tile_boundary/2)))
-        terrainType = terrain_type_map[food_grid[0]+int(tile_boundary/2)][food_grid[1]+int(tile_boundary/2)]
-        aquatic_diff = np.clip(abs(terrainType-food_aquatic),0,1)
+        terrainAquatic = 1 if terrain_type_map[food_grid[0]+int(tile_boundary/2)][food_grid[1]+int(tile_boundary/2)] <= Terrain_Last_Aquatic else 0
+        aquatic_diff = np.clip(abs(terrainAquatic-food_aquatic),0,1)
         if aquatic_diff>0.15:  ##falsely accuses grass tiles of being too wet
             drowning=True
             dmg_scale = (((aquatic_diff-0.15))*(17.0/14.0))+0.163
@@ -764,7 +764,7 @@ def FoodMove(key):
             target_grid=[math.floor(target.getA()/float(tile_size)),math.floor(target.getB()/float(tile_size))]
             target_terrain_type=terrain_type_map[target_grid[0]+int(tile_boundary/2)][target_grid[1]+int(tile_boundary/2)]
             target_index=[target_grid[0]+int(tile_boundary/2),target_grid[1]+int(tile_boundary/2)]
-            if target_terrain_type!=0:
+            if target_terrain_type>Terrain_Last_Aquatic:
                 target=Point(Entities[key].getPos().getA(),Entities[key].getPos().getB())
 ##                print(*target_grid,sep=", ")
 ##                print(*target_index,sep=", ")
@@ -976,17 +976,16 @@ def GenerateChunk(chunkY, chunkX, tile_type_map):
     global Entities
     global Terrain
     global map_string
+##    global tile_data
     Chunk_Terrain=[]
 
-    tile_data=[SimpleNamespace(color=c_water,obj_id="water"),SimpleNamespace(color=(200,200,175),obj_id="sand"),SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_error,obj_id="error")]
-##    chunk_tile_types=[[2 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<0.5 else 1 if noise_values[chunkX*chunk_size+x][chunkY*chunk_size+y]<1 else 0 for y in range(chunk_size)] for x in range(chunk_size)]
+##    tile_data=[SimpleNamespace(color=c_water,obj_id="water"),SimpleNamespace(color=c_sand,obj_id="sand"),SimpleNamespace(color=c_land,obj_id="land"),SimpleNamespace(color=c_error,obj_id="error")]
     chunk_tile_types=[[tile_type_map[chunkY*chunk_size+y][chunkX*chunk_size+x] for y in range(chunk_size)] for x in range(chunk_size)]
     chunk_str='[['+',\n['.join([', '.join([str(cell) for cell in row])+']' for row in chunk_tile_types])+']'
 ##    print(chunk_str)
     map_string+=chunk_str
     Chunk_Terrain=make_polygons(chunk_tile_types,chunkY,chunkX)
-    terrain_colors = [c_water,(200,200,175),c_land,c_error]
-    terrain_colors2 = ['blue','yellow','green','magenta']
+
 
     for polygon,tile,pos in Chunk_Terrain:
         polygon=[Point(x-coord_limit,y-coord_limit) for x,y in polygon]
@@ -1046,6 +1045,11 @@ def GenerateChunk(chunkY, chunkX, tile_type_map):
 ##            Entities[newTile.UUID]=newTile
 ##            Terrain.append(newTile.UUID)
 ##            Entities[newTile.UUID].UpdateHitbox()
+def NoiseGenerator():
+    Terrain_Noise=PerlinNoise(octaves=3)
+    Detail_Noise=PerlinNoise(octaves=6)
+    noise_values=[[(Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary]))*2 for y in range(tile_boundary)] for x in range(tile_boundary)]
+    return noise_values
 
 def MapGenerator():
     global Entities
@@ -1055,9 +1059,22 @@ def MapGenerator():
     global terrain_type_map
     global map_string
     Terrain_Noise=PerlinNoise(octaves=3)
+    broad_noise=[[(Terrain_Noise([x/tile_boundary,y/tile_boundary])) for y in range(tile_boundary)] for x in range(tile_boundary)]
     Detail_Noise=PerlinNoise(octaves=6)
-    noise_values=[[(Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary]))*2 for y in range(tile_boundary)] for x in range(tile_boundary)]
-    terrain_type_map=[[0 if noise_values[x][y]<-0.25 else 1 if noise_values[x][y]<-0.125 else 2 for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)]
+    noise_values=[[(Terrain_Noise([x/tile_boundary,y/tile_boundary]) + 0.5*Detail_Noise([x/tile_boundary,y/tile_boundary])) for y in range(tile_boundary)] for x in range(tile_boundary)]
+    np_noise=np.array(broad_noise)
+    terrain_percentile_values=[np.percentile(np_noise,p) for p in Terrain_Percentiles]
+##    noise_values=NoiseGenerator()
+##    print(terrain_percentile_values)
+##    terrain_type_map=[[Terrain_Dict["Water"] if noise_values[x][y]<-0.25 else Terrain_Dict["Sand"] if noise_values[x][y]<-0.125 else Terrain_Dict["Land"] for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)]
+    terrain_type_map=[
+        [
+            Terrain_Dict["Water"] if noise_values[x][y]<terrain_percentile_values[Terrain_Dict["Water"]] else
+            Terrain_Dict["Sand"] if noise_values[x][y]<terrain_percentile_values[Terrain_Dict["Sand"]] else
+            Terrain_Dict["Land"]
+            for y in range(chunk_size*chunk_limit)
+        ] for x in range(chunk_size*chunk_limit)
+    ]
     map_string="["
     if(not(DEBUG_DISABLE_NOISEIMG) and (Globals.devtest_mode or maps_generated==0)):
 ##        plt.figure(2)
@@ -1079,11 +1096,9 @@ def MapGenerator():
         map_file.write(map_string)
 
 ##    print('======================================================='+str(len(Terrain)))
-    terrain_colors2 = ['blue','yellow','green','magenta']
 ##    print([[str(x)+" "+str(y) for y in range(chunk_size*chunk_limit)] for x in range(chunk_size*chunk_limit)])
 ##    for x in range(chunk_size*chunk_limit):
 ##        for y in range(chunk_size*chunk_limit):
-##            print(str(x)+" "+str(y))
 ##            xl=[x*tile_size,(x+1)*tile_size,(x+1)*tile_size,x*tile_size]
 ##            yl=[y*tile_size,y*tile_size,(y+1)*tile_size,(y+1)*tile_size]
 ##            plt.plot(xl,yl,color='black')

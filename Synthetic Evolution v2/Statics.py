@@ -494,15 +494,22 @@ c_egg=(240,235,200)
 c_bug=(225,225,50)
 c_fish=(25,25,40)
 
+
 ##IDs and Relations
-Terrain_Types=["Water","Sand","Land"]
+Terrain_Last_Aquatic=0
+Terrain_Dict={"Water":0,"Sand":1,"Land":2}
+Terrain_Types=list(Terrain_Dict.keys())
 Food_IDs={'Grass':'Grass','Bush':'Bush','Tree':'Tree','Kelp':'Kelp','Fruit':'Fruit','Mushroom':'Mushroom','Meat':'Meat','Bone':'Bone','Bug':'Bug','Fish':'Fish','Egg':'Egg'}
 
 ##Terrain Colors
 c_water=(75,165,240)
+c_sand=(200,200,175)
 c_land=(73, 99, 15)
 c_testwater=(95,220,255)
 c_error=(237, 9, 188)
+
+terrain_colors = [c_water,c_sand,c_land,c_error]
+terrain_colors2 = ['blue','yellow','green','magenta']
 
 font0=pygame.font.Font('freesansbold.ttf',16)
 font1=pygame.font.Font('freesansbold.ttf',8)
@@ -559,3 +566,15 @@ cmd_dict={
 }
 kill_all=False
 kill_bio=False
+
+
+##Terrain Percentiles
+Terrain_Weight_Dict={"Water":4,"Sand":1,"Land":10}
+Terrain_Weights=[Terrain_Weight_Dict[key] for key in Terrain_Dict]
+##list(Terrain_Weight_Dict.values()).sort(key=Terrain_Dict[Terrain_Weight_Dict.keys()]))
+sum_weight=sum(Terrain_Weights)
+Terrain_Scaled=[(weight/sum_weight) for weight in Terrain_Weights]
+Terrain_Percentiles=Terrain_Scaled.copy()
+Terrain_Percentiles[0]*=100.0
+for i in range(1,len(Terrain_Percentiles)):
+    Terrain_Percentiles[i]=Terrain_Percentiles[i-1]+(Terrain_Percentiles[i]*100)
