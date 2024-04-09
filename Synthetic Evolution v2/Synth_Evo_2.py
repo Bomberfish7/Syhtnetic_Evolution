@@ -22,7 +22,7 @@ from perlin_noise import PerlinNoise
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
-from shapely.geometry import Polygon as Shapely_Polygon
+from shapely.geometry import Polygon as Shapely_Polygon ##can remove
 import re
 
 from types import SimpleNamespace
@@ -37,7 +37,7 @@ DEBUG_DISABLE_NOISEIMG=True
 
 #TO DO:
 #   Make Method to scale foods natural color to Poison or Medicinal color based on poison value (Purple(-) -> Base Color(0) -> Blue(+))
-
+#   Invert food's aquatic levels
 
 
 
@@ -214,7 +214,7 @@ def FoodInWater():
 ##        print(str(food_grid[0])+", "+str(food_grid[1])+" "+str(food_grid[0]+int(tile_boundary/2))+", "+str(food_grid[1]+int(tile_boundary/2)))
         terrainType = terrain_type_map[food_grid[0]+int(tile_boundary/2)][food_grid[1]+int(tile_boundary/2)]
         aquatic_diff = np.clip(abs(terrainType-food_aquatic),0,1)
-        if aquatic_diff>0.15:
+        if aquatic_diff>0.15:  ##falsely accuses grass tiles of being too wet
             drowning=True
             dmg_scale = (((aquatic_diff-0.15))*(17.0/14.0))+0.163
 
@@ -289,7 +289,6 @@ def PointLeftInfLine(l0,l1,point):
     #=0 point on inf line
     #<0 point right of inf line intersecting l0 and l1
     return ( (l1.getA() - l0.getA()) * (point.getB() - l0.getB()) - (point.getA() - l0.getA()) * (l1.getB() - l0.getB()))
-
 
 def CollisionHandler():
     #Handles collision between all objects
@@ -594,13 +593,6 @@ def MergeClusters(a,b):
                 Entities[Entities[b].getAura().UUID]._remove=True
             return True
     return False
-
-
-
-
-
-
-
 
 def FoodReproduce():
     #Creates more food from the other foods in the simulation
@@ -980,7 +972,7 @@ def MakeRectTile(gridX,gridY,gridW=1,gridH=1,color=c_water,obj_id="water",tile=1
     newTile=Tile(pos=Point(tile_offset+tile_size*gridX,tile_offset+tile_size*gridY),shape=[Point(x_offset,y_offset),Point(-tile_offset,y_offset),Point(-tile_offset,-tile_offset),Point(x_offset,-tile_offset)],color=color,obj_id=obj_id,tile=tile)
     return newTile
 
-def GenerateChunk(chunkY, chunkX, tile_type_map):##noise_values):
+def GenerateChunk(chunkY, chunkX, tile_type_map):
     global Entities
     global Terrain
     global map_string
